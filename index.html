@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>if (!document.documentElement.dataset.theme) document.documentElement.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';</script>
+<title>AppDash</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F8F6F1; --panel:#FFFFFF; --ink:#1F2421; --ink-2:#4B524D; --muted:#767C77; --line:#EFECE6;
+  --accent:#0D7F74; --accent-2:#5CC2B5; --accent-soft:#E4F5F1; --bar:#EFEBE2;
+  --hi:#F6BE5F; --hi-2:#FBDDA3; --hi-ink:#7A4A00; --warn:#D9534F; --warn-soft:#FBE4E2;
+  --r-xl:24px; --r-lg:18px; --r-md:14px; --r-sm:10px;
+  --shadow:0 1px 2px rgba(60,50,30,.05),0 8px 24px rgba(60,50,30,.07);
+  --hover:#FAF8F4; --promo-a:#EDF8F5; --promo-b:#D3EEE8; --float:#FFFFFF; --on-accent:#FFFFFF;
+  --amber-soft:#FDF1DC; --sand-soft:#F1ECE2; --sand-ink:#6B5B3E; --rare-ink:#A8322E;
+  --fc-programs:#2a78d6; --fc-videos:#eb6834; --fc-images:#1baf7a; --fc-archives:#eda100; --fc-audio:#e87ba4; --fc-documents:#008300; --fc-system:#4a3aa7; --fc-code:#e34948; --fc-other:#9a988f;
+  color-scheme:light;
+}
+:root[data-theme=dark]{
+  --bg:#15181B; --panel:#1E2226; --ink:#ECEDEA; --ink-2:#C2C7C2; --muted:#949A95; --line:#2D3237;
+  --accent:#4CC9B8; --accent-2:#2E9C8F; --accent-soft:#1C3633; --bar:#2D3237;
+  --hi:#F6BE5F; --hi-2:#8F6A2C; --hi-ink:#F7CB7E; --warn:#F2756A; --warn-soft:#3B2426;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 24px rgba(0,0,0,.25);
+  --hover:#252A2F; --promo-a:#1C3633; --promo-b:#173E39; --float:#2B3136; --on-accent:#0B201D;
+  --amber-soft:#3A3020; --sand-soft:#2E2B25; --sand-ink:#D9C7A1; --rare-ink:#F7A39B;
+  --fc-programs:#3987e5; --fc-videos:#d95926; --fc-images:#199e70; --fc-archives:#c98500; --fc-audio:#d55181; --fc-documents:#008300; --fc-system:#9085e9; --fc-code:#e66767; --fc-other:#6f6d66;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font:15px/1.5 Figtree,"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;color:var(--ink);background:var(--bg);
+  display:grid;grid-template-columns:236px minmax(0,1fr);overflow:hidden;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;border-radius:8px}
+svg{flex:none}
+
+/* Sidebar */
+aside{background:var(--panel);display:flex;flex-direction:column;padding:22px 16px 18px;gap:6px;height:100vh;border-right:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:10px;padding:0 8px 18px;font-weight:800;font-size:22px;letter-spacing:-.02em}
+.logo-mark{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,#2BA597,#0D7F74);display:grid;place-items:center}
+.logo small{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0}
+.side-btn{border:1.5px solid var(--accent);background:var(--panel);color:var(--accent);border-radius:var(--r-sm);padding:9px 12px;font-weight:600;margin:0 4px 14px}
+.side-btn:hover{background:var(--accent-soft)}
+.nav-h{font-size:12.5px;color:var(--muted);padding:10px 12px 4px;font-weight:600}
+.nav{display:flex;align-items:center;gap:12px;border:0;background:none;padding:10px 12px;border-radius:var(--r-sm);font-weight:600;color:var(--ink-2);text-align:left;min-height:44px}
+.nav:hover{background:var(--accent-soft);color:var(--ink)}
+.nav[aria-current=page]{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.appver{margin-top:auto;padding:14px 12px 4px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);display:grid;gap:6px}
+.appver b{color:var(--ink);font-size:13.5px}
+.appver small{display:block;line-height:1.35}
+.appver .btn{justify-content:center;min-height:36px;padding:6px 12px;font-size:13.5px}
+.appver .meter{margin:2px 0}
+.nav .count{margin-left:auto;font-size:12px;background:var(--warn);color:var(--panel);border-radius:99px;padding:1px 8px}
+
+/* Main */
+main{height:100vh;overflow:auto;padding:22px 28px 32px}
+main>header,#view{max-width:1680px;margin-inline:auto}
+header{display:flex;align-items:center;gap:16px;margin-bottom:22px}
+header h1{font-size:26px;margin:0;letter-spacing:-.02em;font-weight:800;flex:1}
+.search{display:flex;align-items:center;gap:8px;background:var(--panel);border-radius:99px;padding:0 16px;height:44px;width:min(340px,40vw);box-shadow:var(--shadow);color:var(--muted)}
+.search input{border:0;outline:0;background:none;flex:1;color:var(--ink)}
+.search:focus-within{outline:2.5px solid var(--accent)}
+.icon-btn{width:44px;height:44px;border-radius:50%;border:0;background:var(--panel);display:grid;place-items:center;box-shadow:var(--shadow);color:var(--ink-2)}
+.icon-btn:hover{color:var(--accent)}
+.spin{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.card{background:var(--panel);border-radius:var(--r-xl);padding:22px 24px;box-shadow:var(--shadow);min-width:0}
+.card-h{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.card-h h2{font-size:18px;margin:0;font-weight:700;flex:1;letter-spacing:-.01em}
+.link{border:0;background:none;color:var(--muted);font-weight:600;padding:6px 4px}
+.link:hover{color:var(--accent)}
+.pill{border:1.5px solid var(--line);background:var(--panel);border-radius:var(--r-sm);padding:6px 12px;font-weight:600;font-size:14px}
+select.pill{padding-right:28px}
+.btn{border:0;border-radius:var(--r-sm);padding:9px 16px;font-weight:700;background:var(--accent);color:var(--on-accent);display:inline-flex;align-items:center;gap:8px;min-height:40px}
+.btn:hover{filter:brightness(1.06)}
+.btn.ghost{background:var(--panel);color:var(--ink-2);border:1.5px solid var(--line)}
+.btn.ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:default}
+.muted{color:var(--muted)}
+.empty{color:var(--muted);text-align:center;padding:28px 12px}
+
+/* Dashboard grid */
+.dash{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:22px}
+.stack{display:grid;gap:22px;align-content:start}
+
+/* Bar chart: the lime, wave-textured highlight is the one loud element */
+.tabs{display:flex;gap:22px;margin:-4px 0 14px}
+.tab{border:0;background:none;padding:6px 0;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:8px}
+.tab[aria-selected=true]{color:var(--ink)}
+.tab[aria-selected=true]::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--hi)}
+.chart{display:grid;grid-template-columns:auto 1fr;gap:14px;height:320px;padding-top:44px}
+.y{display:flex;flex-direction:column;justify-content:space-between;font-size:12.5px;color:var(--muted);text-align:right;padding-bottom:30px}
+.bars{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:16px;background:repeating-linear-gradient(to bottom,var(--line) 0 1px,transparent 1px 25%) top/100% calc(100% - 30px) no-repeat}
+.col{display:flex;flex-direction:column;align-items:center;gap:10px;border:0;background:none;padding:0;min-width:0;height:100%}
+.col .track{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;position:relative}
+.bar{width:min(58px,100%);border-radius:14px;background:var(--bar);transition:background-color .2s,height .5s cubic-bezier(.2,.8,.2,1);min-height:6px}
+.col.on .bar,.bars:hover .col:hover .bar{background:var(--hi) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='44' height='26'><path d='M-2 18 q12 -14 24 0 t24 0' fill='none' stroke='white' stroke-opacity='.5' stroke-width='3.2' stroke-linecap='round'/></svg>") center/44px 26px}
+.bars:hover .col.on:not(:hover) .bar{background:var(--bar)}
+.tip{position:absolute;bottom:calc(var(--h) + 10px);background:var(--panel);border-radius:10px;padding:5px 10px;box-shadow:0 6px 18px rgba(60,50,30,.14);font-size:12px;text-align:center;white-space:nowrap;opacity:0;transition:opacity .15s;pointer-events:none}
+.tip small{display:block;color:var(--muted);font-size:11px}
+.tip b{font-size:13.5px}
+.col.on .tip,.bars:hover .col:hover .tip{opacity:1}
+.bars:hover .col.on:not(:hover) .tip{opacity:0}
+.col .lbl{font-size:12.5px;color:var(--muted);font-weight:600;height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+
+/* Storage tiles */
+.tiles2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.tile{container-type:inline-size;border:1.5px solid var(--line);border-radius:var(--r-lg);padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:150px}
+.gauge{position:relative;width:100%;max-width:200px}
+.gauge svg{width:100%;display:block}
+.g-track{fill:none;stroke:var(--line);stroke-width:13;stroke-linecap:round}
+.g-val{fill:none;stroke-width:13;stroke-linecap:round;transition:stroke-dasharray .8s cubic-bezier(.2,.8,.2,1)}
+.g-txt{position:absolute;inset:auto 0 0;text-align:center}
+.g-txt b{font-size:clamp(16px,14cqi,24px);font-weight:800;letter-spacing:-.02em;display:block;line-height:1.1}
+.g-txt small{font-size:11.5px;color:var(--muted)}
+.big{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.big span{color:var(--warn)}
+.meter{height:12px;background:var(--line);border-radius:99px;overflow:hidden;width:100%;margin:6px 0 12px}
+.meter i{display:block;height:100%;background:var(--warn);border-radius:99px}
+
+/* Promo card */
+.promo{container-type:inline-size;background:linear-gradient(135deg,var(--promo-a) 0%,var(--promo-b) 100%);color:var(--ink);position:relative;overflow:hidden;min-height:200px}
+.promo h2{color:var(--ink);font-size:22px;margin:0 0 6px;font-weight:800}
+.promo p{margin:0 0 18px;max-width:calc(100% - 150px);font-size:14px;opacity:.95}
+.promo .btn{background:var(--accent);color:var(--on-accent)}
+.promo .cta-row{display:flex;gap:10px;flex-wrap:wrap}
+.promo .btn.ghost{background:var(--panel);color:var(--accent);border-color:var(--accent-soft)}
+.float{position:absolute;right:14px;top:22px;width:150px;height:150px;transform:scale(.85);transform-origin:top right}
+.float i{position:absolute;width:52px;height:52px;border-radius:16px;background:var(--float);box-shadow:0 10px 24px rgba(0,40,30,.22);display:grid;place-items:center}
+.float i:nth-child(1){left:0;top:12px;transform:rotate(-10deg);color:var(--hi)}
+.float i:nth-child(2){left:70px;top:0;transform:rotate(8deg);color:var(--warn)}
+.float i:nth-child(3){left:40px;top:76px;transform:rotate(-4deg);color:var(--accent)}
+.float i:nth-child(4){left:104px;top:70px;width:40px;height:40px;border-radius:12px;background:var(--accent-soft)}
+
+/* Rows (update queue, app lists) */
+.row{display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,1.2fr) auto;align-items:center;gap:14px;padding:12px 4px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.app-ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--accent-soft);overflow:hidden}
+.app-ic img{width:26px;height:26px;image-rendering:auto}
+.name{min-width:0}
+.name b{display:block;font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.name small{display:block;color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ver{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);min-width:0}
+.ver .vbar{flex:1 1 24px;height:8px;background:var(--line);border-radius:99px;overflow:hidden;min-width:16px}
+.ver .vbar i{display:block;height:100%;width:62%;background:linear-gradient(90deg,var(--hi-2),var(--hi));border-radius:99px}
+.ver b,.ver span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}.ver b{color:var(--hi-ink)}
+.ver span{white-space:nowrap}
+.acts{display:flex;gap:6px;align-items:center}
+.round{width:36px;height:36px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--line);color:var(--ink-2)}
+.round:hover{background:var(--accent-soft);color:var(--accent)}
+.round.lime{background:var(--hi);color:#3B2600}
+.round.lime:hover{background:#EFA53A}
+.round.danger:hover{background:var(--warn-soft);color:var(--warn)}
+.chip{font-size:12px;font-weight:700;border-radius:99px;padding:3px 10px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.chip.choco{background:var(--sand-soft);color:var(--sand-ink)}
+.chip.portable{background:var(--amber-soft);color:var(--hi-ink)}
+.chip.often{background:var(--accent-soft);color:var(--accent)}
+.chip.rare{background:var(--warn-soft);color:var(--rare-ink)}
+.chip.sometimes{background:var(--line);color:var(--ink-2)}
+
+/* Category tiles */
+.cats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.cat{border:1.5px solid var(--line);border-radius:var(--r-lg);padding:14px;text-align:left;background:var(--panel);display:grid;gap:10px;min-height:44px}
+.cat:hover{border-color:var(--accent)}
+.cat .ci{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff}
+.cat b{font-size:14px}
+.cat small{display:block;color:var(--muted);font-size:12px}
+
+.split{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:22px}
+.ulist .row{grid-template-columns:44px minmax(0,1fr) auto}
+.stat{font-size:13px;color:var(--muted);text-align:right;white-space:nowrap}
+.stat b{display:block;color:var(--ink);font-size:14px}
+
+/* All apps */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;flex:1}
+.fchip{border:1.5px solid var(--line);background:var(--panel);border-radius:99px;padding:6px 14px;font-weight:600;font-size:13.5px;min-height:36px}
+.fchip[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--panel)}
+table{width:100%;border-collapse:collapse}
+th{font-size:12.5px;color:var(--muted);font-weight:600;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);position:sticky;top:-22px;background:var(--panel);z-index:1}
+td{padding:10px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:middle}
+td.app{display:flex;align-items:center;gap:12px;min-width:200px}
+td.app .name{max-width:340px}
+.name small.loc{font-size:12px;opacity:.85}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:hover td{background:var(--hover)}
+
+/* Disks */
+.disks{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px}
+.dstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;text-align:center}
+.dstats b{display:block;font-size:16px}
+.dstats small{color:var(--muted);font-size:12px}
+.stackbar{display:flex;height:12px;border-radius:99px;overflow:hidden;background:var(--line);margin-top:14px}
+.stackbar i:nth-child(1){background:var(--hi)}
+.stackbar i:nth-child(2){background:var(--accent-2)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:8px;flex-wrap:wrap}
+.legend span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;background:var(--c)}
+
+/* Scan */
+.progress{height:10px;border-radius:99px;background:var(--line);overflow:hidden;margin:14px 0 8px}
+.progress i{display:block;height:100%;width:35%;border-radius:99px;background:linear-gradient(90deg,var(--hi-2),var(--hi));animation:slide 1.3s ease-in-out infinite}
+@keyframes slide{from{transform:translateX(-100%)}to{transform:translateX(300%)}}
+.path{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.note{font-size:13px;color:var(--muted);margin-top:14px}
+.toast{position:fixed;right:24px;bottom:24px;background:var(--ink);color:var(--panel);padding:12px 18px;border-radius:var(--r-md);box-shadow:0 10px 30px rgba(0,0,0,.2);font-weight:600;max-width:420px;transform:translateY(20px);opacity:0;transition:.25s}
+.toast.show{transform:none;opacity:1}
+.toast.err{background:var(--warn)}
+.skeleton{display:grid;place-items:center;height:60vh;color:var(--muted);gap:12px;text-align:center}
+
+/* Text buttons in lists */
+.mini{border:1.5px solid var(--line);background:var(--panel);border-radius:8px;padding:4px 10px;font-size:13px;font-weight:600;color:var(--ink-2);min-height:32px;white-space:nowrap}
+.mini:hover{border-color:var(--accent);color:var(--accent)}
+.mini.danger:hover{border-color:var(--warn);color:var(--warn)}
+.mini.solid{background:var(--warn);border-color:var(--warn);color:var(--panel)}
+.mini.solid:hover{filter:brightness(1.08);color:var(--panel)}
+.row input[type=checkbox],.bulk input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);margin:0}
+.ulist .row.sel{grid-template-columns:22px 44px minmax(0,1fr) auto}
+.bulk{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--ink-2);padding:0 4px 10px}
+.bulk .btn{margin-left:auto}
+
+/* Disk drill-down */
+.disk-card{cursor:pointer;border:2px solid transparent}
+.disk-card:hover{border-color:var(--line)}
+.disk-card[aria-expanded=true]{border-color:var(--accent)}
+.disk-card .open-hint{font-size:12.5px;color:var(--accent);font-weight:600;margin-top:12px;text-align:center}
+.disk-page{display:grid;grid-template-columns:320px minmax(0,1fr);gap:22px;align-items:start}
+.disk-page>.card:first-child{position:sticky;top:0}
+.clickable{cursor:pointer}
+.tile.clickable:hover{border-color:var(--accent)}
+.donut{position:relative;width:104px;height:104px}
+.donut svg{width:100%;height:100%;display:block}
+.donut circle{transition:stroke-width .15s}
+.donut circle:hover{stroke-width:16}
+.donut-c{position:absolute;inset:0;display:grid;place-content:center;text-align:center;line-height:1.15}
+.donut-c b{font-size:15px;font-weight:800}
+.donut-c small{font-size:11px;color:var(--muted)}
+.dlegend{list-style:none;margin:10px 0 0;padding:0;width:100%;display:grid;gap:3px;font-size:12px;color:var(--ink-2)}
+.dlegend li{display:flex;align-items:center;gap:6px;white-space:nowrap}
+@container (max-width:440px){.float{display:none}.promo p{max-width:none}}
+.dlegend i{width:9px;height:9px;border-radius:3px;flex:none}
+.dlegend b{margin-left:auto;color:var(--ink);font-weight:700}
+.catbar{display:flex;height:16px;border-radius:99px;overflow:hidden;background:var(--line);margin:4px 0 10px}
+.catbar i{display:block;height:100%}
+.catrow{display:grid;grid-template-columns:12px minmax(0,1fr) 110px 90px minmax(80px,220px) 16px;gap:14px;align-items:center;width:100%;border:0;background:none;padding:12px 6px;border-top:1px solid var(--line);text-align:left;border-radius:8px}
+.catrow:hover{background:var(--hover)}
+.catrow .dot{width:12px;height:12px;border-radius:4px}
+.catrow .num{text-align:right;font-variant-numeric:tabular-nums}
+.catrow svg{transition:transform .2s}
+.catrow[aria-expanded=true] svg{transform:rotate(90deg)}
+.pbar{height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.pbar i{display:block;height:100%;border-radius:99px}
+.files{margin:4px 0 14px 26px}
+.files td{font-size:13px;padding:8px 10px}
+.fname{min-width:0;max-width:min(420px,38vw)}
+.fname b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fname small{display:block;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+@media (max-width:1360px){.dash{grid-template-columns:1fr}.dash>.stack:last-child{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}}
+@media (max-width:1180px){.split,.disk-page{grid-template-columns:1fr}.disk-page>.card:first-child{position:static}}
+@media (max-width:1400px){.col-cat{display:none}}
+@media (max-width:900px){td,th{padding-inline:6px}.col-use{display:none}td.app{min-width:150px}td .acts{flex-wrap:wrap;justify-content:flex-end}}
+@media (max-width:1100px){body{grid-template-columns:72px minmax(0,1fr)}aside{padding:22px 10px 18px}.nav span,.nav-h,.logo span,.side-btn,.appver{display:none}.nav{justify-content:center;position:relative}.nav .count{position:absolute;top:4px;right:4px;font-size:10px;padding:0 5px}.logo{justify-content:center;padding:0 0 18px}main{padding:18px 20px 28px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<aside aria-label="Main menu">
+  <div class="logo"><div class="logo-mark" id="logoIc"></div><span>AppDash<small>App inventory</small></span></div>
+  <button class="side-btn" data-act="checkUpdates">Check for updates</button>
+  <div class="nav-h">Main menu</div>
+  <nav id="nav" style="display:grid;gap:4px"></nav>
+  <div class="appver" id="appver" role="status" aria-live="polite"></div>
+</aside>
+<main>
+  <header>
+    <h1 id="title">Dashboard</h1>
+    <label class="search"><span id="searchIc"></span><input id="q" type="search" placeholder="Search apps" aria-label="Search apps"></label>
+    <button class="icon-btn" data-act="theme" id="themeBtn"></button>
+    <button class="icon-btn" data-act="refresh" aria-label="Reload app list" title="Reload app list" id="refreshBtn"></button>
+  </header>
+  <div id="view"></div>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+// ---------- Bridge ----------
+const pending = new Map(); let seq = 0;
+const call = (cmd, arg) => new Promise((res, rej) => {
+  const id = ++seq; pending.set(id, { res, rej });
+  chrome.webview.postMessage({ id, cmd, arg });
+});
+chrome.webview.addEventListener('message', e => {
+  const m = e.data;
+  if (m.event === 'scan') { if (S.scan) { S.scan = m; if (S.view === 'portable') render(); } return; }
+  if (m.event === 'disk') { if (S.diskBusy) { S.diskBusy = m; if (S.view === 'disks') render(); } return; }
+  if (m.event === 'uninstall') { S.bulk = m; if (S.view === 'usage') render(); return; }
+  if (m.event === 'appUpdate') { S.appUpd = { ...S.appUpd, percent: m.percent }; renderAppVer(); return; }
+  const p = pending.get(m.id); pending.delete(m.id);
+  m.error ? p.rej(new Error(m.error)) : p.res(m.data);
+});
+
+// ---------- Icons ----------
+const P = {
+  grid:'<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
+  list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+  update:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>',
+  activity:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',
+  folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  disk:'<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+  play:'<path d="m8 5 11 7-11 7z"/>',
+  trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  up:'<path d="M12 19V5M5 12l7-7 7 7"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  chev:'<path d="m9 6 6 6-6 6"/>',
+  back:'<path d="M19 12H5M11 18l-6-6 6-6"/>',
+  Games:'<rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v3M5.5 12.5h3M15 12h.01M18 13h.01"/>',
+  Productivity:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/>',
+  Development:'<path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 4l-4 16"/>',
+  Internet:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+  Media:'<rect x="3" y="4" width="18" height="16" rx="3"/><path d="m10 9 5 3-5 3z"/>',
+  Utilities:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>',
+  System:'<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
+  Software:'<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>',
+};
+const ic = (n, s = 20) => `<svg aria-hidden="true" viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${P[n]}</svg>`;
+const CATS = { Games:'#E07A3F', Productivity:'#0F766E', Development:'#6D5BD0', Internet:'#2B7BB9', Media:'#D9534F', Utilities:'#B8862A', System:'#6B7280', Software:'#3F9C6D' };
+
+// ---------- Format ----------
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+function B(n) { if (!n) return '—'; const u = ['B','KB','MB','GB','TB']; let i = 0; while (n >= 1024 && i < 4) { n /= 1024; i++; } return (n >= 100 || i === 0 ? Math.round(n) : n.toFixed(1)) + ' ' + u[i]; }
+const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+function ago(iso) {
+  if (!iso) return 'No recorded use';
+  const d = (Date.parse(iso) - Date.now()) / 864e5;
+  if (d > -1) return 'Today';
+  if (d > -30) return rtf.format(Math.round(d), 'day');
+  if (d > -365) return rtf.format(Math.round(d / 30), 'month');
+  return rtf.format(Math.round(d / 365), 'year');
+}
+const sum = (a, f) => a.reduce((t, x) => t + (f(x) || 0), 0);
+const appIc = a => `<span class="app-ic" style="${a.icon ? '' : `background:${CATS[a.category]}1f;color:${CATS[a.category]}`}">${a.icon ? `<img src="${a.icon}" alt="">` : ic(a.category, 20)}</span>`;
+const nameCell = a => `<div class="name"><b title="${esc(a.name)}">${esc(a.name)}</b><small>${esc(a.publisher || (a.kind === 'portable' ? 'Portable' : 'Unknown publisher'))}${a.version ? ' ' + esc(a.version) : ''}</small></div>`;
+const usageChip = u => `<span class="chip ${u}">${{ often:'Used often', sometimes:'Sometimes', rare:'Rarely used' }[u]}</span>`;
+
+// ---------- State ----------
+const S = { apps: [], disks: [], updates: null, view: 'dash', q: '', cat: 'All', usage: 'all', sort: 'size', chart: 'size', drive: null, scan: null, loading: true,
+  sel: new Set(), bulk: null, diskOpen: null, diskData: {}, diskBusy: null, diskCat: null };
+const VIEWS = { dash:['Dashboard','grid'], all:['All apps','list'], updates:['Updates','update'], usage:['Usage','activity'], portable:['Portable apps','folder'], disks:['Disks','disk'] };
+
+function updateCount() { const u = S.updates; return u && !u.error ? u.winget.items.length + u.choco.items.length : 0; }
+
+function renderNav() {
+  const n = updateCount();
+  document.getElementById('nav').innerHTML = Object.entries(VIEWS).map(([k, [t, i]]) =>
+    `<button class="nav" data-act="nav" data-v="${k}" aria-label="${t}" title="${t}" ${S.view === k ? 'aria-current="page"' : ''}>${ic(i)}<span>${t}</span>${k === 'updates' && n ? `<span class="count">${n}</span>` : ''}</button>`).join('');
+  const disk = S.view === 'disks' && S.disks.find(d => d.name === S.diskOpen);
+  document.getElementById('title').textContent = disk ? diskName(disk) : VIEWS[S.view][0];
+}
+
+function render() {
+  renderNav();
+  const v = document.getElementById('view');
+  if (S.loading && !S.apps.length) { v.innerHTML = `<div class="skeleton"><span class="spin">${ic('update', 28)}</span>Reading installed apps and launch history…</div>`; return; }
+  v.innerHTML = { dash, all, updates, usage, portable, disks }[S.view]();
+}
+
+// ---------- Dashboard ----------
+function byCategory() {
+  return Object.keys(CATS).map(c => { const a = S.apps.filter(x => x.category === c); return { c, n: a.length, size: sum(a, x => x.size) }; });
+}
+
+function chartCard() {
+  const data = byCategory().filter(d => d.n);
+  const key = S.chart === 'size' ? 'size' : 'n';
+  const max = Math.max(1, ...data.map(d => d[key]));
+  const top = data.reduce((m, d) => d[key] > m[key] ? d : m, data[0] || {});
+  const fmt = v => key === 'size' ? B(v) : Math.round(v);
+  const ticks = [1, .75, .5, .25, 0].map(f => f ? fmt(max * f) : '0');
+  return `<section class="card" aria-labelledby="ch">
+    <div class="card-h"><h2 id="ch">Apps by category</h2><span class="muted">${S.apps.length} apps using ${B(sum(S.apps, x => x.size))}</span><button class="link" data-act="nav" data-v="all">View all</button></div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="${key === 'size'}" data-act="chart" data-m="size">Disk space</button>
+      <button class="tab" role="tab" aria-selected="${key === 'n'}" data-act="chart" data-m="n">Number of apps</button>
+    </div>
+    <div class="chart"><div class="y">${ticks.map(t => `<span>${t}</span>`).join('')}</div>
+      <div class="bars">${data.map(d => { const h = Math.max(2, d[key] / max * 100);
+        return `<button class="col ${d === top ? 'on' : ''}" data-act="cat" data-c="${d.c}" aria-label="${d.c}: ${d.n} apps, ${B(d.size)}">
+          <div class="track" style="--h:${h}%"><span class="tip"><small>${d.n} apps</small><b>${B(d.size)}</b></span><div class="bar" style="height:${h}%"></div></div>
+          <span class="lbl">${d.c}</span></button>`; }).join('')}
+      </div></div></section>`;
+}
+
+function gauge(pct, big, small) {
+  const col = pct > 90 ? 'var(--warn)' : 'url(#gg)';
+  return `<div class="gauge"><svg viewBox="0 0 120 68" aria-hidden="true"><defs><linearGradient id="gg" x1="0" x2="1"><stop offset="0" stop-color="#FBDDA3"/><stop offset="1" stop-color="#EFA53A"/></linearGradient></defs>
+    <path class="g-track" d="M10 62a50 50 0 0 1 100 0" pathLength="100"/>
+    <path class="g-val" d="M10 62a50 50 0 0 1 100 0" pathLength="100" stroke="${col}" stroke-dasharray="${Math.max(.5, pct)} 100"/></svg>
+    <div class="g-txt"><b>${big}</b><small>${small}</small></div></div>`;
+}
+
+const appsOn = d => S.apps.filter(a => (a.location || '').toUpperCase().startsWith(d.name.toUpperCase()));
+
+function storageCard() {
+  const d = S.disks.find(x => x.name === S.drive) || S.disks[0];
+  if (!d) return '';
+  const used = d.total - d.free, pct = used / d.total * 100, open = `data-act="openDisk" data-d="${esc(d.name)}" role="button" tabindex="0"`;
+  return `<section class="card" aria-labelledby="st">
+    <div class="card-h"><h2 id="st">Storage</h2>
+      <select class="pill" data-change="drive" aria-label="Drive">${S.disks.map(x => `<option value="${esc(x.name)}" ${x === d ? 'selected' : ''}>${esc(x.name.replace('\\', ''))} ${esc(x.label)}</option>`).join('')}</select>
+      <button class="link" data-act="openDisk" data-d="${esc(d.name)}">Details</button></div>
+    <div class="tiles2">
+      <div class="tile clickable" ${open} aria-label="${esc(diskName(d))}: ${B(used)} used of ${B(d.total)}. Open details">${gauge(pct, B(used), `used of ${B(d.total)}`)}</div>
+      <div class="tile clickable" ${open} aria-label="File types on ${esc(d.name.replace('\\', ''))}. Open details">${fileDonut(d.name)}</div>
+    </div></section>`;
+}
+
+// Donut of space by file type. Segments go in fixed slot order (adjacent pairs are the validated ones),
+// with a 2px surface gap; the legend names the top 3 in ink, the disk page has the full labelled list.
+function fileDonut(drive) {
+  const r = S.diskData[drive], label = esc(drive.replace('\\', ''));
+  if (!r) return S.diskBusy?.drive === drive
+    ? `<span class="spin">${ic('update', 22)}</span><small class="muted">Sorting files on ${label}…</small>`
+    : `<small class="muted">Scan ${label} to see file types</small>`;
+  const cats = inSlotOrder(r.categories).filter(c => c.size > 0), total = Math.max(1, sum(cats, c => c.size));
+  const C = 2 * Math.PI * 38, gap = cats.length > 1 ? 2 : 0;
+  let off = 0;
+  const segs = cats.map(c => {
+    const len = c.size / total * C, seg = `<circle cx="50" cy="50" r="38" fill="none" stroke="${FILECATS[c.name]}" stroke-width="13"
+      stroke-dasharray="${Math.max(0, len - gap)} ${C}" stroke-dashoffset="${-off}"><title>${c.name}: ${B(c.size)} (${Math.round(c.size / total * 100)}%)</title></circle>`;
+    off += len; return seg;
+  }).join('');
+  const top = [...cats].sort((a, b) => b.size - a.size).slice(0, 3);
+  return `<div class="donut"><svg viewBox="0 0 100 100" role="img" aria-label="${cats.map(c => `${c.name} ${B(c.size)}`).join(', ')}"><g transform="rotate(-90 50 50)">${segs}</g></svg>
+      <div class="donut-c"><b>${B(r.total)}</b><small>in files</small></div></div>
+    <ul class="dlegend">${top.map(c => `<li><i style="background:${FILECATS[c.name]}"></i>${c.name}<b>${B(c.size)}</b></li>`).join('')}</ul>`;
+}
+
+function promoCard() {
+  const n = S.apps.filter(a => a.kind === 'portable').length;
+  return `<section class="card promo">
+    <div class="float" aria-hidden="true"><i>${ic('Games', 26)}</i><i>${ic('Media', 26)}</i><i>${ic('Development', 26)}</i><i></i></div>
+    <h2>Find portable apps</h2>
+    <p>${n ? `${n} found so far. Scan again to pick up new ones.` : 'Programs that run from a folder never show up in Settings. Scan to list them here.'}</p>
+    <div class="cta-row"><button class="btn" data-act="scanAll">Scan all drives</button><button class="btn ghost" data-act="scanFolder">Pick a folder</button></div>
+  </section>`;
+}
+
+function updateRow(u) {
+  const app = S.apps.find(a => a.name.toLowerCase().startsWith(u.name.replace('…', '').toLowerCase()));
+  const a = app || { name: u.name, category: 'Software' };
+  return `<div class="row">${appIc(a)}
+    <div class="name"><b>${esc(app?.name || u.name)}</b><small>${esc(u.id)}</small></div>
+    <div class="ver"><span>${esc(u.version)}</span><span class="vbar"><i></i></span><b>${esc(u.available)}</b></div>
+    <div class="acts"><span class="chip ${u.source}">${u.source}</span>
+      <button class="round lime" data-act="upgrade" data-src="${u.source}" data-id="${esc(u.id)}" data-name="${esc(u.name)}" aria-label="Update ${esc(u.name)}" title="Update">${ic('up', 18)}</button></div></div>`;
+}
+
+function allUpdates() { const u = S.updates; return u && !u.error ? [...u.winget.items, ...u.choco.items] : []; }
+
+function queueCard() {
+  const u = S.updates, list = allUpdates();
+  let body;
+  if (!u) body = `<div class="empty"><span class="spin" style="display:inline-block">${ic('update')}</span><br>Asking winget and Chocolatey for updates…</div>`;
+  else if (u.error) body = `<div class="empty">Couldn't check for updates: ${esc(u.error)}</div>`;
+  else if (!list.length) body = `<div class="empty">Everything is up to date.</div>`;
+  else body = list.slice(0, 5).map(updateRow).join('');
+  return `<section class="card" aria-labelledby="uq">
+    <div class="card-h"><h2 id="uq">Updates ${list.length ? `<span class="muted">(${list.length})</span>` : ''}</h2>
+      ${list.length ? `<button class="btn ghost" data-act="upgradeAll">${ic('up', 16)}Update all</button>` : ''}
+      <button class="link" data-act="nav" data-v="updates">View all</button></div>${body}</section>`;
+}
+
+function catsCard() {
+  return `<section class="card" aria-labelledby="ct"><div class="card-h"><h2 id="ct">Categories</h2><button class="link" data-act="nav" data-v="all">View all</button></div>
+    <div class="cats">${byCategory().filter(d => d.n).map(d => `<button class="cat" data-act="cat" data-c="${d.c}">
+      <span class="ci" style="background:${CATS[d.c]}">${ic(d.c, 20)}</span>
+      <span><b>${d.c} (${d.n})</b><small>${B(d.size)}</small></span></button>`).join('')}</div></section>`;
+}
+
+function usageList(apps, kind, selectable) {
+  if (!apps.length) return `<div class="empty">${kind === 'often' ? 'No launches recorded in the last week.' : 'Nothing here.'}</div>`;
+  const box = a => !selectable ? '' : a.kind === 'installed'
+    ? `<input type="checkbox" data-sel="${esc(a.id)}" ${S.sel.has(a.id) ? 'checked' : ''} aria-label="Select ${esc(a.name)}">` : '<span></span>';
+  return apps.map(a => `<div class="row${selectable ? ' sel' : ''}">${box(a)}${appIc(a)}${nameCell(a)}
+    <div class="stat">${kind === 'often' ? `<b>${a.runCount ? a.runCount + ' launches' : 'Recent'}</b>${ago(a.lastUsed)}` : `<b>${B(a.size)}</b>${ago(a.lastUsed)}`}</div></div>`).join('');
+}
+
+const often = () => S.apps.filter(a => a.usage === 'often').sort((x, y) => y.runCount - x.runCount || Date.parse(y.lastUsed) - Date.parse(x.lastUsed));
+const rare = () => S.apps.filter(a => a.usage === 'rare' && a.category !== 'System').sort((x, y) => y.size - x.size);
+
+function dash() {
+  return `<div class="dash">
+    <div class="stack">${chartCard()}${queueCard()}</div>
+    <div class="stack">${storageCard()}${promoCard()}${catsCard()}</div>
+  </div>
+  <div class="split">
+    <section class="card ulist"><div class="card-h"><h2>Used often</h2><button class="link" data-act="nav" data-v="usage">View all</button></div>${usageList(often().slice(0, 5), 'often')}</section>
+    <section class="card ulist"><div class="card-h"><h2>Rarely used</h2><span class="muted">${B(sum(rare(), a => a.size))} to reclaim</span><button class="link" data-act="nav" data-v="usage">View all</button></div>${usageList(rare().slice(0, 5), 'rare')}</section>
+  </div>`;
+}
+
+// ---------- All apps ----------
+function filtered() {
+  const q = S.q.toLowerCase();
+  let a = S.apps;
+  if (q) a = a.filter(x => `${x.name} ${x.publisher || ''} ${x.location || ''}`.toLowerCase().includes(q));
+  if (S.cat !== 'All') a = a.filter(x => x.category === S.cat);
+  if (S.usage !== 'all') a = a.filter(x => x.usage === S.usage);
+  const by = { size: (x, y) => y.size - x.size, name: (x, y) => x.name.localeCompare(y.name), used: (x, y) => (Date.parse(y.lastUsed) || 0) - (Date.parse(x.lastUsed) || 0) };
+  return [...a].sort(by[S.sort]);
+}
+
+const actions = a => `<div class="acts">
+  ${a.kind === 'portable' && a.exe ? `<button class="round" data-act="launch" data-id="${esc(a.id)}" aria-label="Open ${esc(a.name)}" title="Open">${ic('play', 16)}</button>` : ''}
+  <button class="round" data-act="reveal" data-id="${esc(a.id)}" aria-label="Show ${esc(a.name)} in File Explorer" title="Show in File Explorer">${ic('folder', 16)}</button>
+  ${a.kind === 'installed' && a.canRepair ? `<button class="mini" data-act="repair" data-id="${esc(a.id)}" data-name="${esc(a.name)}">Repair</button>` : ''}
+  ${a.kind === 'installed'
+    ? `<button class="mini danger" data-act="uninstall" data-id="${esc(a.id)}" data-name="${esc(a.name)}">Uninstall</button>`
+    : `<button class="mini danger" data-act="removePortable" data-id="${esc(a.id)}" data-name="${esc(a.name)}">Delete</button>`}</div>`;
+
+const sel = (key, opts, label) => `<select class="pill" data-change="${key}" aria-label="${label}">${opts.map(([v, t]) => `<option value="${v}" ${S[key] === v ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
+
+function appTable(list) {
+  return `<div style="overflow:auto"><table><thead><tr><th>App</th><th class="col-cat">Category</th><th class="col-use">Usage</th><th style="text-align:right">Size</th><th></th></tr></thead><tbody>
+    ${list.map(a => `<tr><td class="app">${appIc(a)}<div class="name"><b title="${esc(a.name)}">${esc(a.name)}</b><small>${esc(a.publisher || (a.kind === 'portable' ? 'Portable' : 'Unknown publisher'))}${a.version ? ' ' + esc(a.version) : ''}</small><small class="loc" title="${esc(a.location)}">${esc(a.location || 'No install folder')}</small></div></td>
+      <td class="col-cat">${esc(a.category)}</td><td class="col-use">${usageChip(a.usage)}<small class="muted" style="display:block;white-space:nowrap;margin-top:3px">${ago(a.lastUsed)}</small></td><td class="num">${B(a.size)}</td>
+      <td>${actions(a)}</td></tr>`).join('')}
+    </tbody></table></div>`;
+}
+
+// Installed = listed in Settings > Apps (uninstall registry); portable = runs from a folder, found by a scan.
+function all() {
+  const list = filtered(), filteredOut = S.q || S.cat !== 'All' || S.usage !== 'all';
+  const inst = list.filter(a => a.kind === 'installed'), port = list.filter(a => a.kind === 'portable');
+  const head = (title, items, extra) => `<div class="card-h"><h2>${title} <span class="muted">(${items.length})</span></h2><span class="muted">${B(sum(items, a => a.size))}</span>${extra || ''}</div>`;
+  const none = msg => `<div class="empty">${filteredOut ? 'No apps match. Clear the search or pick another category.' : msg}</div>`;
+  return `<section class="card">
+    <div class="toolbar" style="margin:0"><div class="chips">${['All', ...Object.keys(CATS)].map(c => `<button class="fchip" data-act="filterCat" data-c="${c}" aria-pressed="${S.cat === c}">${c}</button>`).join('')}</div>
+      ${sel('usage', [['all', 'Any usage'], ['often', 'Used often'], ['sometimes', 'Sometimes'], ['rare', 'Rarely used']], 'Usage')}
+      ${sel('sort', [['size', 'Largest first'], ['name', 'Name'], ['used', 'Recently used']], 'Sort')}</div>
+  </section>
+  <section class="card" style="margin-top:22px" aria-labelledby="instH">
+    ${head('<span id="instH">Installed apps</span>', inst, '<span class="muted">Listed in Settings &gt; Apps</span>')}
+    ${inst.length ? appTable(inst) : none('No installed apps found.')}
+  </section>
+  <section class="card" style="margin-top:22px" aria-labelledby="portH">
+    ${head('<span id="portH">Portable apps</span>', port, '<button class="link" data-act="nav" data-v="portable">Scan for more</button>')}
+    ${port.length ? appTable(port) : none('No portable apps yet. Scan your drives to find programs that run without installing.<br><br><button class="btn" data-act="scanAll">Scan all drives</button>')}
+  </section>`;
+}
+
+// ---------- Updates ----------
+function sourceCard(title, src, data) {
+  if (!data.installed) return `<section class="card"><div class="card-h"><h2>${title}</h2></div>
+    <div class="empty">${title} isn’t installed. Use Install in Package managers above.</div></section>`;
+  return `<section class="card"><div class="card-h"><h2>${title} <span class="muted">(${data.items.length})</span></h2>
+    ${data.items.length ? `<button class="btn" data-act="upgrade" data-src="${src}">${ic('up', 16)}Update all</button>` : ''}</div>
+    ${data.items.length ? data.items.map(updateRow).join('') : '<div class="empty">Everything is up to date.</div>'}
+    ${src === 'choco' ? '<p class="note">Chocolatey updates run in an admin window.</p>' : ''}</section>`;
+}
+
+function updates() {
+  const u = S.updates;
+  if (!u) return `<div class="skeleton"><span class="spin">${ic('update', 28)}</span>Checking winget and Chocolatey. This can take a minute.</div>`;
+  if (u.error) return `<section class="card"><div class="empty">Couldn't check for updates: ${esc(u.error)}<br><br><button class="btn" data-act="checkUpdates">Check again</button></div></section>`;
+  const pm = (title, data, act, note) => `<div class="tile" style="align-items:flex-start;text-align:left;min-height:0;gap:6px">
+    <b style="font-size:16px">${title}</b>
+    ${data.installed ? `<span class="chip often">Installed${data.version ? ' ' + esc(data.version) : ''}</span>` : `<span class="chip rare">Not installed</span>`}
+    <small class="muted">${note}</small>
+    ${data.installed ? '' : `<button class="btn" data-act="${act}" style="margin-top:6px">${ic('up', 16)}Install ${title}</button>`}</div>`;
+  return `<div class="stack">
+    <section class="card"><div class="card-h"><h2>Package managers</h2><button class="btn ghost" data-act="checkUpdates">${ic('update', 16)}Check again</button></div>
+      <div class="tiles2">${pm('winget', u.winget, 'wingetInstall', 'Built into Windows as App Installer. Updates most desktop apps.')}${pm('Chocolatey', u.choco, 'chocoInstall', 'Community package manager. Installs and updates run as administrator.')}</div></section>
+    ${sourceCard('winget', 'winget', u.winget)}${sourceCard('Chocolatey', 'choco', u.choco)}</div>`;
+}
+
+// ---------- Usage ----------
+function usage() {
+  const r = rare(), mid = S.apps.filter(a => a.usage === 'sometimes').sort((x, y) => Date.parse(y.lastUsed) - Date.parse(x.lastUsed));
+  return `<div class="split" style="margin-top:0">
+    <section class="card ulist"><div class="card-h"><h2>Used often</h2><span class="muted">last 7 days</span></div>${usageList(often(), 'often')}</section>
+    <section class="card ulist"><div class="card-h"><h2>Rarely used</h2><span class="muted">${B(sum(r, a => a.size))} to reclaim</span></div>${bulkBar(r)}${usageList(r, 'rare', true)}</section>
+  </div>
+  <section class="card ulist" style="margin-top:22px"><div class="card-h"><h2>Used sometimes</h2><span class="muted">in the last 60 days</span></div>${usageList(mid, 'often')}</section>
+  <p class="note">Launch history comes from Windows (UserAssist, plus Prefetch when AppDash runs as administrator). Apps started by other programs or services may show no recorded use. System components are left out of “Rarely used”.</p>`;
+}
+
+// ---------- Portable ----------
+function portable() {
+  const list = S.apps.filter(a => a.kind === 'portable').sort((x, y) => y.size - x.size);
+  const sc = S.scan;
+  return `<section class="card">
+    <div class="card-h"><h2>Scan for portable apps</h2>
+      ${sc ? `<button class="btn ghost" data-act="cancelScan">Stop scan</button>` : `<button class="btn ghost" data-act="scanFolder">${ic('folder', 16)}Pick a folder</button><button class="btn" data-act="scanAll">Scan all drives</button>`}</div>
+    ${sc ? `<div class="progress"><i></i></div><b>${sc.found ?? 0} found in ${(sc.dirs ?? 0).toLocaleString()} folders</b><div class="path">${esc(sc.current)}</div>`
+         : `<p class="muted" style="margin:0">Looks for .exe, .bat and .cmd files outside installed app folders. Windows, Program Files, AppData and source-code folders are skipped.</p>`}
+  </section>
+  <section class="card" style="margin-top:22px"><div class="card-h"><h2>Portable apps <span class="muted">(${list.length})</span></h2><span class="muted">${B(sum(list, a => a.size))}</span></div>
+    ${list.length ? `<div class="ulist">${list.map(a => `<div class="row" style="grid-template-columns:44px minmax(0,1fr) minmax(0,1fr) auto auto">${appIc(a)}${nameCell(a)}
+      <div class="path" title="${esc(a.exe)}">${esc(a.exe)}</div><div class="stat"><b>${B(a.size)}</b>${ago(a.lastUsed)}</div>${actions(a)}</div>`).join('')}</div>`
+      : `<div class="empty">No portable apps yet. Run a scan to find them.</div>`}
+  </section>`;
+}
+
+function bulkBar(list) {
+  if (S.bulk) return `<div class="bulk" role="status"><span class="spin">${ic('update', 16)}</span>Uninstalling ${esc(S.bulk.name)} (${S.bulk.done + 1} of ${S.bulk.total})…</div>`;
+  const ids = list.filter(a => a.kind === 'installed').map(a => a.id);
+  const allOn = ids.length > 0 && ids.every(id => S.sel.has(id));
+  return `<div class="bulk"><input type="checkbox" id="selAll" data-sel="all" ${allOn ? 'checked' : ''}><label for="selAll">Select all</label>
+    <button class="btn" data-act="uninstallSel" ${S.sel.size ? '' : 'disabled'}>Uninstall selected${S.sel.size ? ` (${S.sel.size})` : ''}</button></div>`;
+}
+
+// ---------- Disks ----------
+// Validated categorical palette (dataviz skill): passes CVD + normal-vision checks for ADJACENT slots only,
+// so stacked/donut segments are always drawn in this fixed order, never sorted by size. "Other" is the neutral fold.
+const FC_ORDER = ['Programs', 'Videos', 'Images', 'Archives', 'Audio', 'Documents', 'System', 'Code', 'Other'];
+const FILECATS = Object.fromEntries(FC_ORDER.map(n => [n, `var(--fc-${n.toLowerCase()})`]));
+const inSlotOrder = cats => [...cats].sort((a, b) => FC_ORDER.indexOf(a.name) - FC_ORDER.indexOf(b.name));
+
+function diskDetail(name) {
+  const r = S.diskData[name], b = S.diskBusy, label = esc(name.replace('\\', ''));
+  if (b) return `<section class="card detail"><div class="card-h"><h2>Scanning ${esc(b.drive.replace('\\', ''))}</h2><button class="btn ghost" data-act="stopDisk">Stop scan</button></div>
+    <div class="progress"><i></i></div><b>${(b.files || 0).toLocaleString()} files, ${B(b.size)} so far</b><div class="path">${esc(b.current)}</div>
+    ${b.drive !== name ? '<p class="note">Another drive is being scanned. Wait for it to finish or stop it first.</p>' : ''}</section>`;
+  if (!r) return `<section class="card detail"><div class="empty">${label} hasn’t been scanned yet.<br><br><button class="btn" data-act="rescanDisk" data-d="${esc(name)}">Scan ${label}</button></div></section>`;
+  const max = Math.max(1, ...r.categories.map(c => c.size));
+  return `<section class="card detail"><div class="card-h"><h2>What’s on ${label}</h2>
+      <span class="muted">${r.fileCount.toLocaleString()} files, ${B(r.total)}, scanned at ${new Date(r.scannedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+      <button class="btn ghost" data-act="rescanDisk" data-d="${esc(name)}">${ic('update', 16)}Rescan</button></div>
+    <div class="catbar" role="img" aria-label="${r.categories.map(c => `${c.name} ${B(c.size)}`).join(', ')}">${inSlotOrder(r.categories).map(c => `<i style="width:${c.size / Math.max(1, r.total) * 100}%;background:${FILECATS[c.name]}" title="${c.name}: ${B(c.size)}"></i>`).join('')}</div>
+    ${r.categories.map(c => catRow(c, max)).join('')}
+    <p class="note">Each type lists its 100 largest files. System files (the Windows folder and system-flagged files like the page file) can be viewed but not deleted here.</p></section>`;
+}
+
+function catRow(c, max) {
+  const open = S.diskCat === c.name, col = FILECATS[c.name];
+  return `<button class="catrow" data-act="toggleCat" data-c="${c.name}" aria-expanded="${open}">
+      <span class="dot" style="background:${col}"></span><b>${c.name}</b>
+      <span class="num muted">${c.count.toLocaleString()} files</span><span class="num"><b>${B(c.size)}</b></span>
+      <span class="pbar"><i style="width:${c.size / max * 100}%;background:${col}"></i></span>${ic('chev', 16)}</button>
+    ${open ? fileTable(c) : ''}`;
+}
+
+function fileTable(c) {
+  if (!c.files.length) return '<div class="empty">No files left in this list. Rescan to refresh it.</div>';
+  const sys = c.name === 'System';
+  return `<div class="files" style="overflow:auto"><table><thead><tr><th>File</th><th style="text-align:right">Size</th><th>Modified</th><th></th></tr></thead><tbody>
+    ${c.files.map(f => { const i = f.path.lastIndexOf('\\'), p = esc(f.path);
+      const name = esc(f.path.slice(i + 1)), btn = (act, icon, label, extra = '') =>
+        `<button class="round${extra}" data-act="${act}" data-path="${p}" aria-label="${label} ${name}" title="${label}">${ic(icon, 16)}</button>`;
+      return `<tr><td><div class="fname"><b title="${p}">${name}</b><small>${esc(f.path.slice(0, i))}</small></div></td>
+        <td class="num">${B(f.size)}</td><td style="white-space:nowrap">${new Date(f.modified).toLocaleDateString()}</td>
+        <td><div class="acts">${btn('openFile', 'play', 'Open')}${btn('revealFile', 'folder', 'Show in folder')}
+        ${sys ? '<span class="muted" style="font-size:12px">System file</span>' : `${btn('delFile', 'trash', 'Move to Recycle Bin', ' danger')}<button class="mini solid" data-act="delFile" data-perm="1" data-path="${p}" aria-label="Delete ${name} permanently" title="Delete permanently (skips the Recycle Bin)">Delete</button>`}</div></td></tr>`; }).join('')}
+    </tbody></table></div>`;
+}
+
+const diskName = d => `${d.name.replace('\\', '')} ${d.label || 'Local disk'}`;
+
+function diskSummary(d) {
+  const used = d.total - d.free, appsB = sum(appsOn(d), a => a.size), other = Math.max(0, used - appsB);
+  return `<div class="card-h"><h2>${esc(diskName(d))}</h2><span class="chip sometimes">${esc(d.format)}, ${esc(d.type)}</span></div>
+    <div style="display:grid;place-items:center">${gauge(used / d.total * 100, Math.round(used / d.total * 100) + '%', 'used')}</div>
+    <div class="dstats"><div><b>${B(used)}</b><small>Used</small></div><div><b>${B(d.free)}</b><small>Free</small></div><div><b>${B(d.total)}</b><small>Total</small></div></div>
+    <div class="stackbar" role="img" aria-label="Apps ${B(appsB)}, other files ${B(other)}, free ${B(d.free)}"><i style="width:${appsB / d.total * 100}%"></i><i style="width:${other / d.total * 100}%"></i></div>
+    <div class="legend"><span style="--c:var(--hi)">Apps ${B(appsB)}</span><span style="--c:var(--accent-2)">Other files ${B(other)}</span><span style="--c:var(--line)">Free ${B(d.free)}</span></div>`;
+}
+
+// Grid of drives; clicking one opens its own page (summary on the left, file types on the right).
+function disks() {
+  const open = S.disks.find(d => d.name === S.diskOpen);
+  if (open) return `<button class="btn ghost" data-act="closeDisk" style="margin-bottom:18px">${ic('back', 16)}All disks</button>
+    <div class="disk-page"><section class="card">${diskSummary(open)}</section>${diskDetail(open.name)}</div>`;
+  return `<div class="disks">${S.disks.map(d => `<section class="card disk-card" role="button" tabindex="0" data-act="openDisk" data-d="${esc(d.name)}" aria-label="Open ${esc(diskName(d))}">
+      ${diskSummary(d)}<div class="open-hint">See what’s using space</div></section>`).join('')}</div>`;
+}
+
+async function scanDisk(drive, refresh) {
+  if (S.diskBusy) return;
+  S.diskBusy = { drive, files: 0, size: 0, current: drive }; render();
+  try { const r = await call('diskScan', { drive, refresh: !!refresh }); if (r) S.diskData[drive] = r; else toast('Scan stopped'); }
+  catch (e) { fail(e); }
+  S.diskBusy = null; render();
+}
+
+async function delFile(path, perm) {
+  const name = path.slice(path.lastIndexOf('\\') + 1);
+  if (!confirm(perm ? `Permanently delete ${name}?\n\nIt won't go to the Recycle Bin and can't be recovered.` : `Move ${name} to the Recycle Bin?`)) return;
+  try {
+    const r = await call('deleteFile', { path, permanent: perm });
+    S.diskData[r.drive] = r;
+    S.disks = await call('disks');
+    toast(perm ? `Deleted ${name}` : `Moved ${name} to the Recycle Bin`);
+    render();
+  } catch (e) { fail(e); }
+}
+
+async function uninstallSelected() {
+  const picked = S.apps.filter(a => S.sel.has(a.id));
+  if (!picked.length || !confirm(`Uninstall ${picked.length} apps?\n\n${picked.map(a => a.name).join('\n')}\n\nEach app's uninstaller opens in turn. AppDash waits for one to finish before starting the next.`)) return;
+  S.bulk = { done: 0, total: picked.length, name: picked[0].name }; render();
+  try { const n = await call('uninstallMany', { ids: picked.map(a => a.id) }); toast(`Finished ${n} uninstallers`); S.sel.clear(); S.bulk = null; await load(); }
+  catch (e) { fail(e); }
+  S.bulk = null; render();
+}
+
+function paintThemeBtn() {
+  const dark = document.documentElement.dataset.theme === 'dark', b = document.getElementById('themeBtn');
+  b.innerHTML = ic(dark ? 'sun' : 'moon', 20);
+  b.title = dark ? 'Switch to light mode' : 'Switch to dark mode';
+  b.setAttribute('aria-label', b.title);
+}
+function setTheme(t) { document.documentElement.dataset.theme = t; paintThemeBtn(); call('theme', { theme: t }).catch(fail); }
+
+// ---------- Events ----------
+let toastT;
+function toast(msg, err) { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast show' + (err ? ' err' : ''); clearTimeout(toastT); toastT = setTimeout(() => t.className = 'toast', 4000); }
+const fail = e => toast(e.message, true);
+
+document.addEventListener('click', async e => {
+  const t = e.target.closest('[data-act]'); if (!t) return;
+  const d = t.dataset;
+  switch (d.act) {
+    case 'nav': S.view = d.v; if (d.v === 'disks') S.diskOpen = null; render(); document.querySelector('main').scrollTop = 0; break;
+    case 'cat': S.cat = d.c; S.view = 'all'; render(); break;
+    case 'filterCat': S.cat = d.c; render(); break;
+    case 'chart': S.chart = d.m; render(); break;
+    case 'refresh': load(); break;
+    case 'checkUpdates': loadUpdates(); break;
+    case 'upgrade': call('upgrade', { source: d.src, id: d.id }).then(() => toast(`Updating ${d.name || 'all ' + d.src + ' packages'} in a new window`)).catch(fail); break;
+    case 'reveal': call('reveal', { id: d.id }).catch(fail); break;
+    case 'launch': call('launch', { id: d.id }).catch(fail); break;
+    case 'uninstall': if (confirm(`Uninstall ${d.name}?\n\nThe app's own uninstaller will open.`)) call('uninstall', { id: d.id }).then(() => toast(`Opened the uninstaller for ${d.name}`)).catch(fail); break;
+    case 'chocoInstall': call('chocoInstall').then(() => toast('Installing Chocolatey in a new window. Click Check again when it finishes.')).catch(fail); break;
+    case 'wingetInstall': call('wingetInstall').then(() => toast('Installing winget in a new window. Click Check again when it finishes.')).catch(fail); break;
+    case 'upgradeAll': {
+      const srcs = ['winget', 'choco'].filter(s => S.updates?.[s]?.items.length);
+      Promise.all(srcs.map(source => call('upgrade', { source }))).then(() => toast(`Updating everything with ${srcs.join(' and ')}`)).catch(fail);
+      break;
+    }
+    case 'scanAll': scan(null); break;
+    case 'scanFolder': { const p = await call('pickFolder').catch(fail); if (p) scan(p); break; }
+    case 'cancelScan': call('cancelScan'); break;
+    case 'theme': setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'); break;
+    case 'repair': if (confirm(`Repair ${d.name}?\n\nWindows may ask for permission, and the app's installer may open.`)) call('repair', { id: d.id }).then(() => toast(`Started repair for ${d.name}`)).catch(fail); break;
+    case 'removePortable': if (confirm(`Move ${d.name} to the Recycle Bin?`)) call('removePortable', { id: d.id }).then(() => { S.apps = S.apps.filter(a => a.id !== d.id); toast(`Moved ${d.name} to the Recycle Bin`); render(); }).catch(fail); break;
+    case 'uninstallSel': uninstallSelected(); break;
+    case 'openDisk': S.view = 'disks'; S.diskOpen = d.d; S.diskCat = null; render(); document.querySelector('main').scrollTop = 0; if (!S.diskData[d.d]) scanDisk(d.d); break;
+    case 'closeDisk': S.diskOpen = null; render(); break;
+    case 'rescanDisk': scanDisk(d.d, true); break;
+    case 'stopDisk': call('cancelDiskScan'); break;
+    case 'toggleCat': S.diskCat = S.diskCat === d.c ? null : d.c; render(); break;
+    case 'openFile': call('openFile', { path: d.path }).catch(fail); break;
+    case 'revealFile': call('revealFile', { path: d.path }).catch(fail); break;
+    case 'delFile': delFile(d.path, d.perm === '1'); break;
+    case 'appCheck': checkApp(); break;
+    case 'appInstall':
+      S.appUpd = { ...S.appUpd, percent: 0 }; renderAppVer();
+      call('appUpdateInstall').catch(e => { fail(e); S.appUpd = { ...S.appUpd, percent: null }; renderAppVer(); });
+      break;
+  }
+});
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('[role=button][data-act]')) { e.preventDefault(); e.target.click(); }
+});
+document.addEventListener('change', e => {
+  const sel = e.target.dataset.sel;
+  if (sel) {
+    const ids = sel === 'all' ? rare().filter(a => a.kind === 'installed').map(a => a.id) : [sel];
+    ids.forEach(id => e.target.checked ? S.sel.add(id) : S.sel.delete(id));
+    render();
+    document.querySelector(`[data-sel="${CSS.escape(sel)}"]`)?.focus(); // keep keyboard position after re-render
+    return;
+  }
+  const k = e.target.dataset.change; if (k) { S[k] = e.target.value; render(); if (k === 'drive' && !S.diskData[S.drive]) scanDisk(S.drive); }
+});
+document.getElementById('q').addEventListener('input', e => { S.q = e.target.value; if (S.view !== 'all') S.view = 'all'; render(); });
+
+async function scan(path) {
+  if (S.scan) return;
+  S.scan = { dirs: 0, found: 0, current: path || 'All drives' }; S.view = 'portable'; render();
+  try {
+    const res = await call('scan', { path });
+    if (res === null) toast('Scan stopped');
+    else { S.apps = [...S.apps.filter(a => a.kind !== 'portable'), ...res]; toast(`Found ${res.length} portable apps`); }
+  } catch (e) { fail(e); }
+  S.scan = null; render();
+}
+
+async function load() {
+  const b = document.getElementById('refreshBtn').firstElementChild;
+  b?.classList.add('spin'); S.loading = true; render();
+  try {
+    const [apps, dk] = await Promise.all([call('apps'), call('disks')]);
+    S.apps = apps; S.disks = dk; S.sel.clear();
+    S.drive ??= (dk.find(d => d.name.startsWith('C')) || dk[0])?.name;
+    if (S.drive && !S.diskData[S.drive]) setTimeout(() => scanDisk(S.drive)); // fills the dashboard's file-type donut
+  } catch (e) { fail(e); }
+  S.loading = false; b?.classList.remove('spin'); render();
+}
+
+async function loadUpdates() {
+  S.updates = null; render();
+  try { S.updates = await call('updates'); } catch (e) { S.updates = { error: e.message }; }
+  render();
+}
+
+// Same mark as app.ico: three app tiles and one highlighted (amber) dot.
+document.getElementById('logoIc').innerHTML = `<svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><rect x="3" y="3" width="8" height="8" rx="2.4" fill="#fff"/><rect x="13" y="3" width="8" height="8" rx="2.4" fill="#fff" opacity=".78"/><rect x="3" y="13" width="8" height="8" rx="2.4" fill="#fff" opacity=".78"/><circle cx="17" cy="17" r="4.2" fill="#F6BE5F"/></svg>`;
+document.getElementById('searchIc').innerHTML = ic('search', 18);
+document.getElementById('refreshBtn').innerHTML = ic('update', 20);
+paintThemeBtn();
+call('theme', { theme: document.documentElement.dataset.theme }).catch(() => {}); // sync the window title bar
+// AppDash's own updates (Velopack). Deltas are used automatically when the feed has one.
+function renderAppVer() {
+  const u = S.appUpd, el = document.getElementById('appver');
+  if (!u) el.innerHTML = `<span><span class="spin" style="display:inline-block;vertical-align:-2px">${ic('update', 14)}</span> Checking for AppDash updates…</span>`;
+  else if (u.error) el.innerHTML = `<span>Couldn't check for AppDash updates.</span><button class="link" style="justify-self:start;padding:0" data-act="appCheck">Try again</button>`;
+  else if (u.percent != null) el.innerHTML = `<b>Downloading AppDash ${esc(u.available)}</b><div class="meter"><i style="width:${u.percent}%;background:var(--accent)"></i></div><small>${u.percent}%. AppDash restarts when it's done.</small>`;
+  else if (!u.managed) el.innerHTML = `<b>AppDash ${esc(u.version)}</b><small>${esc(u.reason)}</small>`;
+  else if (u.available) el.innerHTML = `<b>AppDash ${esc(u.available)} is ready</b><small>${u.delta ? 'Delta update' : 'Full update'}, ${B(u.size)} to download</small><button class="btn" data-act="appInstall">Update and restart</button>`;
+  else el.innerHTML = `<b>AppDash ${esc(u.version)}</b><small>Up to date.</small><button class="link" style="justify-self:start;padding:0" data-act="appCheck">Check for updates</button>`;
+}
+async function checkApp() {
+  S.appUpd = null; renderAppVer();
+  try { S.appUpd = await call('appUpdateCheck'); } catch (e) { S.appUpd = { error: e.message }; }
+  renderAppVer();
+}
+
+load(); loadUpdates(); checkApp();
+</script>
+</body>
+</html>

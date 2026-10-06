@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>
+// Theme before first paint: saved choice, else the phone's dark mode setting.
+(() => { const n = window.AppDashNative, t = n && n.theme();
+  document.documentElement.dataset.theme = t || ((n ? n.systemDark() : matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light'); })();
+</script>
+<title>AppDash</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Same tokens as the Windows app (index.html at the repo root). */
+:root{
+  --bg:#F8F6F1; --panel:#FFFFFF; --ink:#1F2421; --ink-2:#4B524D; --muted:#767C77; --line:#EFECE6;
+  --accent:#0D7F74; --accent-2:#5CC2B5; --accent-soft:#E4F5F1; --bar:#EFEBE2;
+  --hi:#F6BE5F; --hi-2:#FBDDA3; --hi-ink:#7A4A00; --warn:#D9534F; --warn-soft:#FBE4E2;
+  --shadow:0 1px 2px rgba(60,50,30,.05),0 6px 18px rgba(60,50,30,.06);
+  --on-accent:#FFFFFF; --hover:#FAF8F4; --rare-ink:#A8322E;
+  /* Validated categorical palette (dataviz validator): segments always drawn in this slot order. */
+  --fc-apps:#2a78d6; --fc-videos:#eb6834; --fc-images:#1baf7a; --fc-archives:#eda100; --fc-audio:#e87ba4; --fc-documents:#008300; --fc-system:#4a3aa7; --fc-other:#9a988f;
+  --r-xl:22px; --r-lg:16px; --r-sm:10px;
+  color-scheme:light;
+}
+:root[data-theme=dark]{
+  --bg:#15181B; --panel:#1E2226; --ink:#ECEDEA; --ink-2:#C2C7C2; --muted:#949A95; --line:#2D3237;
+  --accent:#4CC9B8; --accent-2:#2E9C8F; --accent-soft:#1C3633; --bar:#2D3237;
+  --hi:#F6BE5F; --hi-2:#8F6A2C; --hi-ink:#F7CB7E; --warn:#F2756A; --warn-soft:#3B2426;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 6px 18px rgba(0,0,0,.25);
+  --on-accent:#0B201D; --hover:#252A2F; --rare-ink:#F7A39B;
+  --fc-apps:#3987e5; --fc-videos:#d95926; --fc-images:#199e70; --fc-archives:#c98500; --fc-audio:#d55181; --fc-documents:#008300; --fc-system:#9085e9; --fc-other:#6f6d66;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{font:16px/1.5 Figtree,system-ui,sans-serif;color:var(--ink);background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;border-radius:8px}
+svg{flex:none}
+
+header{display:flex;align-items:center;gap:8px;padding:12px 16px 8px}
+header h1{font-size:24px;margin:0;font-weight:800;letter-spacing:-.02em;flex:1;min-width:0}
+.icon-btn{width:44px;height:44px;border-radius:50%;border:0;background:var(--panel);display:grid;place-items:center;box-shadow:var(--shadow);color:var(--ink-2)}
+main{flex:1;overflow-y:auto;overflow-x:hidden;padding:4px 16px 24px;display:grid;gap:16px;align-content:start}
+nav.tabs{display:grid;grid-template-columns:repeat(4,1fr);background:var(--panel);border-top:1px solid var(--line)}
+nav.tabs button{border:0;background:none;display:grid;justify-items:center;gap:2px;padding:8px 4px 10px;min-height:60px;font-size:12.5px;font-weight:600;color:var(--muted)}
+nav.tabs button[aria-current=page]{color:var(--accent)}
+nav.tabs button[aria-current=page] .pill{background:var(--accent-soft)}
+nav.tabs .pill{width:56px;height:30px;border-radius:99px;display:grid;place-items:center}
+
+.card{background:var(--panel);border-radius:var(--r-xl);padding:18px 16px;box-shadow:var(--shadow);min-width:0}
+.card-h{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.card-h h2{font-size:18px;margin:0;font-weight:700;flex:1;min-width:0}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.link{border:0;background:none;color:var(--accent);font-weight:600;padding:8px 4px;min-height:44px}
+.btn{border:0;border-radius:var(--r-sm);padding:10px 16px;font-weight:700;background:var(--accent);color:var(--on-accent);display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px}
+.btn.ghost{background:var(--panel);color:var(--ink-2);border:1.5px solid var(--line)}
+.btn.danger{background:var(--warn);color:var(--panel)}
+.btn:disabled{opacity:.5}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.empty{color:var(--muted);text-align:center;padding:20px 8px}
+.chip{font-size:12px;font-weight:700;border-radius:99px;padding:3px 10px;white-space:nowrap}
+.chip.often{background:var(--accent-soft);color:var(--accent)}
+.chip.sometimes{background:var(--line);color:var(--ink-2)}
+.chip.rare{background:var(--warn-soft);color:var(--rare-ink)}
+.chip.system{background:var(--line);color:var(--ink-2)}
+.spin{animation:spin 1s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Permission prompt */
+.perm{border:1.5px dashed var(--accent);background:var(--accent-soft)}
+.perm p{margin:0 0 12px;font-size:14.5px;color:var(--ink-2)}
+
+/* Storage tiles */
+.tiles2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{container-type:inline-size;border:1.5px solid var(--line);border-radius:var(--r-lg);padding:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:150px;background:none}
+.gauge{position:relative;width:100%;max-width:180px}
+.gauge svg{width:100%;display:block}
+.g-track{fill:none;stroke:var(--line);stroke-width:13;stroke-linecap:round}
+.g-val{fill:none;stroke-width:13;stroke-linecap:round}
+.g-txt{position:absolute;inset:auto 0 0;text-align:center}
+.g-txt b{font-size:clamp(15px,14cqi,22px);font-weight:800;display:block;line-height:1.1}
+.g-txt small{font-size:11.5px;color:var(--muted)}
+.donut{position:relative;width:96px;height:96px}
+.donut svg{width:100%;height:100%;display:block}
+.donut-c{position:absolute;inset:0;display:grid;place-content:center;text-align:center;line-height:1.15}
+.donut-c b{font-size:14px;font-weight:800}
+.donut-c small{font-size:10.5px;color:var(--muted)}
+.dlegend{list-style:none;margin:8px 0 0;padding:0;width:100%;display:grid;gap:2px;font-size:12px;color:var(--ink-2)}
+.dlegend li{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.dlegend i{width:9px;height:9px;border-radius:3px;flex:none}
+.dlegend b{margin-left:auto;color:var(--ink)}
+
+/* Horizontal bars: the amber, wave-textured top bar is the one loud element (same as Windows) */
+.seg{display:flex;gap:18px;margin:-2px 0 10px}
+.seg button{border:0;background:none;padding:6px 0;min-height:44px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:8px}
+.seg button[aria-selected=true]{color:var(--ink)}
+.seg button[aria-selected=true]::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--hi)}
+.hbar{display:grid;grid-template-columns:92px 1fr auto;align-items:center;gap:10px;width:100%;border:0;background:none;padding:6px 0;min-height:44px;text-align:left}
+.hbar .hl{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hbar .ht{height:18px;background:var(--line);border-radius:6px;overflow:hidden}
+.hbar .ht i{display:block;height:100%;border-radius:6px;background:var(--bar);min-width:4px}
+.hbar.on .ht i{background:var(--hi) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='36' height='18'><path d='M-2 13 q10 -10 20 0 t20 0' fill='none' stroke='white' stroke-opacity='.55' stroke-width='2.6' stroke-linecap='round'/></svg>") left center/36px 18px}
+:root[data-theme=dark] .hbar .ht i{background-color:#3a4047}
+:root[data-theme=dark] .hbar.on .ht i{background-color:var(--hi)}
+.hbar .hv{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;min-width:64px;text-align:right}
+
+/* App rows */
+.row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line);min-height:60px}
+.row:first-child{border-top:0}
+.row input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent);flex:none}
+.app-ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;overflow:hidden;flex:none;background:var(--line)}
+.app-ic img{width:42px;height:42px}
+.name{flex:1;min-width:0}
+.name b{display:block;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.name small{display:block;color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat{font-size:12.5px;color:var(--muted);text-align:right;white-space:nowrap}
+.stat b{display:block;color:var(--ink);font-size:14px}
+.arow{border-top:1px solid var(--line)}
+.arow:first-child{border-top:0}
+.arow>button{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;padding:10px 0;min-height:62px;text-align:left}
+.adetail{padding:0 0 14px 54px;display:grid;gap:10px}
+.adetail dl{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin:0;font-size:13.5px}
+.adetail dt{color:var(--muted)}
+.adetail dd{margin:0;text-align:right;font-weight:600}
+.adetail .btns .btn{flex:1 1 auto;min-height:40px;padding:8px 12px;font-size:14px}
+
+.toolbar{display:grid;gap:10px}
+.search{display:flex;align-items:center;gap:8px;background:var(--panel);border-radius:99px;padding:0 14px;height:46px;box-shadow:var(--shadow);color:var(--muted)}
+.search input{border:0;outline:0;background:none;flex:1;min-width:0;color:var(--ink);font-size:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.fchip{border:1.5px solid var(--line);background:var(--panel);border-radius:99px;padding:6px 14px;font-weight:600;font-size:14px;min-height:40px}
+.fchip[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--panel)}
+select.sel{border:1.5px solid var(--line);background:var(--panel);border-radius:var(--r-sm);padding:8px 12px;min-height:44px;font-weight:600}
+.bulk{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink-2);padding-bottom:6px;flex-wrap:wrap}
+.bulk .btn{margin-left:auto}
+
+/* Storage breakdown */
+.catbar{display:flex;height:14px;border-radius:99px;overflow:hidden;background:var(--line);margin:2px 0 8px;gap:2px}
+.catbar i{display:block;height:100%}
+.catrow{display:grid;grid-template-columns:12px minmax(0,1fr) auto 16px;gap:12px;align-items:center;width:100%;border:0;background:none;padding:12px 2px;border-top:1px solid var(--line);text-align:left;min-height:52px}
+.catrow .dot{width:12px;height:12px;border-radius:4px}
+.catrow small{display:block;color:var(--muted);font-size:12.5px}
+.catrow svg{transition:transform .2s}
+.catrow[aria-expanded=true] svg{transform:rotate(90deg)}
+.pbar{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:6px}
+.pbar i{display:block;height:100%;border-radius:99px}
+.frow{display:flex;align-items:center;gap:8px;padding:10px 0 10px 24px;border-top:1px dashed var(--line)}
+.frow .name b{font-weight:600;font-size:14px}
+.round{width:44px;height:44px;border-radius:50%;border:0;display:grid;place-items:center;background:var(--line);color:var(--ink-2);flex:none}
+.round.danger{color:var(--warn)}
+.progress{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:12px 0 8px}
+.progress i{display:block;height:100%;width:35%;border-radius:99px;background:linear-gradient(90deg,var(--hi-2),var(--hi));animation:slide 1.3s ease-in-out infinite}
+@keyframes slide{from{transform:translateX(-100%)}to{transform:translateX(300%)}}
+.path{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meter{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:6px 0}
+.meter i{display:block;height:100%;background:var(--accent);border-radius:99px}
+
+.toast{position:fixed;left:16px;right:16px;bottom:84px;background:var(--ink);color:var(--panel);padding:12px 16px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);font-weight:600;transform:translateY(16px);opacity:0;transition:.25s;pointer-events:none}
+.toast.show{transform:none;opacity:1}
+.toast.err{background:var(--warn)}
+.skeleton{display:grid;place-items:center;min-height:50vh;color:var(--muted);gap:12px;text-align:center}
+@media (min-width:700px){main{grid-template-columns:1fr 1fr}.wide{grid-column:1/-1}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">AppDash</h1>
+  <button class="icon-btn" id="themeBtn" data-act="theme"></button>
+  <button class="icon-btn" data-act="refresh" aria-label="Reload" title="Reload" id="refreshBtn"></button>
+</header>
+<main id="view"></main>
+<nav class="tabs" id="tabs" aria-label="Sections"></nav>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+// ---------- Bridge (same protocol as the Windows app) ----------
+const pending = new Map(); let seq = 0;
+const call = (cmd, arg = {}) => new Promise((res, rej) => {
+  const id = ++seq; pending.set(id, { res, rej });
+  AppDashNative.call(id, cmd, JSON.stringify(arg));
+});
+window.__native = m => {
+  if (m.event === 'files') { if (S.scan) { S.scan = m; if (S.view === 'storage') render(); } return; }
+  if (m.event === 'uninstall') { S.bulk = m; render(); return; }
+  if (m.event === 'appUpdate') { S.appUpd = m.error ? { ...S.appUpd, percent: null } : { ...S.appUpd, percent: m.percent }; if (m.error) toast(m.error, true); render(); return; }
+  const p = pending.get(m.id); pending.delete(m.id);
+  if (p) m.error ? p.rej(new Error(m.error)) : p.res(m.data);
+};
+
+// ---------- Icons ----------
+const P = {
+  grid:'<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',
+  list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+  activity:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',
+  disk:'<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+  update:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+  play:'<path d="m8 5 11 7-11 7z"/>',
+  trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  chev:'<path d="m9 6 6 6-6 6"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  Games:'<rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v3M5.5 12.5h3M15 12h.01M18 13h.01"/>',
+  Social:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',
+  Productivity:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/>',
+  Media:'<rect x="3" y="4" width="18" height="16" rx="3"/><path d="m10 9 5 3-5 3z"/>',
+  Maps:'<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+  News:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/>',
+  System:'<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
+  Other:'<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>',
+};
+const ic = (n, s = 20) => `<svg aria-hidden="true" viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${P[n]}</svg>`;
+const CATS = ['Games', 'Social', 'Productivity', 'Media', 'Maps', 'News', 'System', 'Other'];
+// Storage slots in the validated palette order (Data.ORDER in Kotlin must match).
+const FC_ORDER = ['Apps', 'Videos', 'Images', 'Archives', 'Audio', 'Documents', 'System', 'Other'];
+const FILECATS = Object.fromEntries(FC_ORDER.map(n => [n, `var(--fc-${n.toLowerCase()})`]));
+const inSlotOrder = cats => [...cats].sort((a, b) => FC_ORDER.indexOf(a.name) - FC_ORDER.indexOf(b.name));
+
+// ---------- Format ----------
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+function B(n) { if (!n) return '—'; const u = ['B','KB','MB','GB','TB']; let i = 0; while (n >= 1024 && i < 4) { n /= 1024; i++; } return (n >= 100 || i === 0 ? Math.round(n) : n.toFixed(1)) + ' ' + u[i]; }
+const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+function ago(ms) {
+  if (!ms) return 'Not used in 30 days';
+  const d = (ms - Date.now()) / 864e5;
+  if (d > -1) return 'Today';
+  return d > -30 ? rtf.format(Math.round(d), 'day') : rtf.format(Math.round(d / 30), 'month');
+}
+const date = ms => ms ? new Date(ms).toLocaleDateString() : '—';
+const mins = ms => ms < 60000 ? 'Under a minute' : ms < 3600000 ? `${Math.round(ms / 60000)} min` : `${(ms / 3600000).toFixed(1)} h`;
+const plural = (n, w) => `${n.toLocaleString()} ${w}${n === 1 ? '' : 's'}`;
+const sum = (a, f) => a.reduce((t, x) => t + (f(x) || 0), 0);
+const appIc = a => `<span class="app-ic">${a.icon ? `<img src="${a.icon}" alt="">` : ic(a.category, 20)}</span>`;
+
+// ---------- State ----------
+const S = { view: 'home', apps: [], usageAccess: true, perms: { usage: true, files: true }, storage: null, files: null, scan: null,
+  loading: true, q: '', cat: 'All', sort: 'size', chart: 'size', openApp: null, openCat: null, sel: new Set(), bulk: null, appUpd: null };
+const VIEWS = { home:['AppDash','grid','Home'], apps:['Apps','list','Apps'], usage:['Usage','activity','Usage'], storage:['Storage','disk','Storage'] };
+
+function render() {
+  document.getElementById('title').textContent = VIEWS[S.view][0];
+  document.getElementById('tabs').innerHTML = Object.entries(VIEWS).map(([k, [, i, label]]) =>
+    `<button data-act="nav" data-v="${k}" ${S.view === k ? 'aria-current="page"' : ''}><span class="pill">${ic(i, 22)}</span>${label}</button>`).join('');
+  const v = document.getElementById('view');
+  if (S.loading && !S.apps.length) { v.innerHTML = `<div class="skeleton wide"><span class="spin">${ic('update', 28)}</span>Reading your apps…</div>`; return; }
+  v.innerHTML = { home, apps, usage, storage }[S.view]();
+}
+
+// ---------- Shared pieces ----------
+function permCard(which) {
+  const text = which === 'usage'
+    ? ['See which apps you use', 'Turn on Usage access for AppDash to see app sizes, last use and screen time.']
+    : ['See what fills your storage', 'Turn on All files access for AppDash to sort your files by type and find the largest ones.'];
+  return `<section class="card perm wide"><div class="card-h"><h2>${text[0]}</h2></div><p>${text[1]}</p>
+    <button class="btn" data-act="grant" data-w="${which}">Open settings</button></section>`;
+}
+
+function gauge(pct, big, small) {
+  const col = pct > 90 ? 'var(--warn)' : 'url(#gg)';
+  return `<div class="gauge"><svg viewBox="0 0 120 68" aria-hidden="true"><defs><linearGradient id="gg" x1="0" x2="1"><stop offset="0" stop-color="#FBDDA3"/><stop offset="1" stop-color="#EFA53A"/></linearGradient></defs>
+    <path class="g-track" d="M10 62a50 50 0 0 1 100 0" pathLength="100"/>
+    <path class="g-val" d="M10 62a50 50 0 0 1 100 0" pathLength="100" stroke="${col}" stroke-dasharray="${Math.max(.5, pct)} 100"/></svg>
+    <div class="g-txt"><b>${big}</b><small>${small}</small></div></div>`;
+}
+
+// Fixed slot order with a 2px gap; the legend names the top 3, the Storage tab has the full list.
+function donut(r) {
+  const cats = inSlotOrder(r.categories).filter(c => c.size > 0), total = Math.max(1, sum(cats, c => c.size));
+  const C = 2 * Math.PI * 38, gap = cats.length > 1 ? 2 : 0;
+  let off = 0;
+  const segs = cats.map(c => { const len = c.size / total * C;
+    const s = `<circle cx="50" cy="50" r="38" fill="none" stroke="${FILECATS[c.name]}" stroke-width="13" stroke-dasharray="${Math.max(0, len - gap)} ${C}" stroke-dashoffset="${-off}"/>`;
+    off += len; return s; }).join('');
+  const top = [...cats].sort((a, b) => b.size - a.size).slice(0, 3);
+  return `<div class="donut"><svg viewBox="0 0 100 100" role="img" aria-label="${cats.map(c => `${c.name} ${B(c.size)}`).join(', ')}"><g transform="rotate(-90 50 50)">${segs}</g></svg>
+    <div class="donut-c"><b>${B(r.total)}</b><small>used</small></div></div>
+    <ul class="dlegend">${top.map(c => `<li><i style="background:${FILECATS[c.name]}"></i>${c.name}<b>${B(c.size)}</b></li>`).join('')}</ul>`;
+}
+
+function storageCard() {
+  const s = S.storage; if (!s) return '';
+  const used = s.total - s.free;
+  const right = S.files ? donut(S.files)
+    : !S.perms.files ? `<small class="muted">Allow file access to see file types</small>`
+    : S.scan ? `<span class="spin">${ic('update', 22)}</span><small class="muted">Sorting your files…</small>`
+    : `<small class="muted">Tap to sort files by type</small>`;
+  return `<section class="card"><div class="card-h"><h2>Storage</h2><button class="link" data-act="nav" data-v="storage">Details</button></div>
+    <div class="tiles2"><button class="tile" data-act="nav" data-v="storage" aria-label="Storage: ${B(used)} used of ${B(s.total)}">${gauge(used / s.total * 100, B(used), `used of ${B(s.total)}`)}</button>
+      <button class="tile" data-act="nav" data-v="storage" aria-label="Storage by file type">${right}</button></div></section>`;
+}
+
+// ---------- Home ----------
+function chartCard() {
+  const bySize = S.chart === 'size' && S.usageAccess;
+  const data = CATS.map(c => { const a = S.apps.filter(x => x.category === c); return { c, n: a.length, size: sum(a, x => x.size) }; }).filter(d => d.n);
+  const key = bySize ? 'size' : 'n', max = Math.max(1, ...data.map(d => d[key]));
+  const top = data.reduce((m, d) => d[key] > m[key] ? d : m, data[0] || {});
+  return `<section class="card"><div class="card-h"><h2>Apps by category</h2><span class="muted small">${S.apps.length} apps</span></div>
+    <div class="seg" role="tablist">
+      <button role="tab" aria-selected="${bySize}" data-act="chart" data-m="size" ${S.usageAccess ? '' : 'disabled'}>Space</button>
+      <button role="tab" aria-selected="${!bySize}" data-act="chart" data-m="n">Number of apps</button></div>
+    ${[...data].sort((a, b) => b[key] - a[key]).map(d => `<button class="hbar ${d === top ? 'on' : ''}" data-act="cat" data-c="${d.c}" aria-label="${d.c}: ${d.n} apps, ${B(d.size)}">
+      <span class="hl">${d.c}</span><span class="ht"><i style="width:${d[key] / max * 100}%"></i></span><span class="hv">${bySize ? B(d.size) : d.n}</span></button>`).join('')}
+  </section>`;
+}
+
+const freeable = list => { const b = sum(list, a => a.size); return b ? `<span class="muted small">${B(b)} to free</span>` : ''; };
+const often = () => S.apps.filter(a => a.usage === 'often').sort((x, y) => y.fgMs - x.fgMs);
+const rare = () => S.apps.filter(a => a.usage === 'rare' && a.kind === 'user').sort((x, y) => y.size - x.size);
+
+function miniList(list, stat) {
+  return list.length ? list.map(a => `<div class="row">${appIc(a)}<div class="name"><b>${esc(a.name)}</b><small>${esc(a.version)}</small></div><div class="stat">${stat(a)}</div></div>`).join('')
+    : '<div class="empty">Nothing here yet.</div>';
+}
+
+function aboutCard() {
+  const u = S.appUpd;
+  let body;
+  if (!u) body = `<span class="spin">${ic('update', 16)}</span> Checking for AppDash updates…`;
+  else if (u.error) body = `<p class="muted small" style="margin:0">Couldn't check for updates.</p><button class="link" data-act="appCheck">Try again</button>`;
+  else if (u.percent != null) body = `<b>Downloading AppDash ${esc(u.available)}</b><div class="meter"><i style="width:${u.percent}%"></i></div><small class="muted">${u.percent}%. Android asks you to confirm the install.</small>`;
+  else if (!u.managed) body = `<small class="muted">${esc(u.reason)}</small>`;
+  else if (u.available) body = `<b>AppDash ${esc(u.available)} is ready</b><p class="muted small" style="margin:4px 0 10px">Full update, ${B(u.size)} to download.</p><button class="btn" data-act="appInstall">Update AppDash</button>`;
+  else body = `<p class="muted small" style="margin:0">Up to date.</p><button class="link" data-act="appCheck">Check for updates</button>`;
+  return `<section class="card wide"><div class="card-h"><h2>AppDash ${esc(u?.version || '')}</h2></div>${body}</section>`;
+}
+
+function home() {
+  return `${!S.perms.usage ? permCard('usage') : ''}
+    ${storageCard()}${chartCard()}
+    ${S.usageAccess ? `<section class="card"><div class="card-h"><h2>Used often</h2><button class="link" data-act="nav" data-v="usage">See all</button></div>${miniList(often().slice(0, 5), a => `<b>${mins(a.fgMs)}</b>${ago(a.lastUsed)}`)}</section>
+    <section class="card"><div class="card-h"><h2>Rarely used</h2>${freeable(rare())}</div>${miniList(rare().slice(0, 5), a => `<b>${B(a.size)}</b>${ago(a.lastUsed)}`)}</section>` : ''}
+    ${aboutCard()}`;
+}
+
+// ---------- Apps ----------
+function filtered() {
+  const q = S.q.toLowerCase();
+  let a = S.apps;
+  if (q) a = a.filter(x => `${x.name} ${x.id}`.toLowerCase().includes(q));
+  if (S.cat !== 'All') a = a.filter(x => x.category === S.cat);
+  const by = { size: (x, y) => y.size - x.size || x.name.localeCompare(y.name), name: (x, y) => x.name.localeCompare(y.name), used: (x, y) => (y.lastUsed || 0) - (x.lastUsed || 0) };
+  return [...a].sort(by[S.sort]);
+}
+
+function appRow(a) {
+  const open = S.openApp === a.id;
+  return `<div class="arow"><button data-act="toggleApp" data-id="${esc(a.id)}" aria-expanded="${open}">${appIc(a)}
+      <div class="name"><b>${esc(a.name)}</b><small>${esc(a.version || a.id)}</small></div>
+      <div class="stat"><b>${B(a.size)}</b>${S.usageAccess ? ago(a.lastUsed) : ''}</div></button>
+    ${open ? `<div class="adetail">
+      <dl><dt>Category</dt><dd>${esc(a.category)}</dd>${S.usageAccess ? `<dt>Screen time, 30 days</dt><dd>${mins(a.fgMs)}</dd><dt>Last used</dt><dd>${ago(a.lastUsed)}</dd>` : ''}
+        <dt>Installed</dt><dd>${date(a.installed)}</dd><dt>Updated</dt><dd>${date(a.updated)}</dd></dl>
+      <div class="btns">
+        ${a.canOpen ? `<button class="btn ghost" data-act="open" data-id="${esc(a.id)}">Open</button>` : ''}
+        <button class="btn ghost" data-act="info" data-id="${esc(a.id)}">App info</button>
+        <button class="btn ghost" data-act="store" data-id="${esc(a.id)}">Play Store</button>
+        ${a.canUninstall ? `<button class="btn danger" data-act="uninstall" data-id="${esc(a.id)}" data-name="${esc(a.name)}">${a.kind === 'system' ? 'Remove updates' : 'Uninstall'}</button>` : ''}
+      </div></div>` : ''}</div>`;
+}
+
+// Like Windows' Installed / Portable split: apps you installed vs. ones that came with the phone.
+function apps() {
+  const list = filtered(), mine = list.filter(a => a.kind === 'user'), sys = list.filter(a => a.kind === 'system');
+  const section = (title, items, note) => `<section class="card wide"><div class="card-h"><h2>${title} <span class="muted">(${items.length})</span></h2>${S.usageAccess ? `<span class="muted small">${B(sum(items, a => a.size))}</span>` : ''}</div>
+    ${note ? `<p class="muted small" style="margin:-6px 0 8px">${note}</p>` : ''}
+    ${items.length ? items.map(appRow).join('') : '<div class="empty">No apps match. Clear the search or pick another category.</div>'}</section>`;
+  return `<div class="toolbar wide">
+      <label class="search">${ic('search', 18)}<input id="q" type="search" placeholder="Search apps" aria-label="Search apps" value="${esc(S.q)}"></label>
+      <div class="chips">${['All', ...CATS].map(c => `<button class="fchip" data-act="filterCat" data-c="${c}" aria-pressed="${S.cat === c}">${c}</button>`).join('')}</div>
+      <select class="sel" data-change="sort" aria-label="Sort">${[['size', 'Largest first'], ['name', 'Name'], ['used', 'Recently used']].map(([v, t]) => `<option value="${v}" ${S.sort === v ? 'selected' : ''}>${t}</option>`).join('')}</select>
+    </div>
+    ${!S.perms.usage ? permCard('usage') : ''}
+    ${section('Your apps', mine)}
+    ${section('System apps', sys, 'Came with your phone. You can remove updates to some, but not uninstall them.')}`;
+}
+
+// ---------- Usage ----------
+function usageRows(list, stat, selectable) {
+  if (!list.length) return '<div class="empty">Nothing here.</div>';
+  return list.map(a => `<div class="row">${selectable ? `<input type="checkbox" data-sel="${esc(a.id)}" ${S.sel.has(a.id) ? 'checked' : ''} aria-label="Select ${esc(a.name)}">` : ''}${appIc(a)}
+    <div class="name"><b>${esc(a.name)}</b><small>${ago(a.lastUsed)}</small></div><div class="stat">${stat(a)}</div></div>`).join('');
+}
+
+function usage() {
+  if (!S.usageAccess) return permCard('usage');
+  const r = rare(), mid = S.apps.filter(a => a.usage === 'sometimes').sort((x, y) => (y.lastUsed || 0) - (x.lastUsed || 0));
+  const allOn = r.length > 0 && r.every(a => S.sel.has(a.id));
+  const bulk = S.bulk ? `<div class="bulk" role="status"><span class="spin">${ic('update', 16)}</span>Uninstalling ${esc(S.bulk.name)} (${S.bulk.done + 1} of ${S.bulk.total})…</div>`
+    : `<div class="bulk"><input type="checkbox" id="selAll" data-sel="all" ${allOn ? 'checked' : ''} style="width:22px;height:22px;accent-color:var(--accent)"><label for="selAll">Select all</label>
+      <button class="btn" data-act="uninstallSel" ${S.sel.size ? '' : 'disabled'}>Uninstall selected${S.sel.size ? ` (${S.sel.size})` : ''}</button></div>`;
+  return `<section class="card"><div class="card-h"><h2>Used often</h2><span class="muted small">last 7 days</span></div>${usageRows(often(), a => `<b>${mins(a.fgMs)}</b>screen time`)}</section>
+    <section class="card"><div class="card-h"><h2>Rarely used</h2>${freeable(r)}</div>${r.length ? bulk : ''}${usageRows(r, a => `<b>${B(a.size)}</b>`, true)}</section>
+    <section class="card wide"><div class="card-h"><h2>Used sometimes</h2><span class="muted small">last 30 days</span></div>${usageRows(mid, a => `<b>${mins(a.fgMs)}</b>screen time`)}</section>
+    <p class="muted small wide" style="margin:0">Usage comes from Android's last 30 days of app activity. System apps are left out of “Rarely used”.</p>`;
+}
+
+// ---------- Storage ----------
+function fileRows(c) {
+  if (!c.files.length) return '<div class="empty">No files left in this list. Scan again to refresh it.</div>';
+  return c.files.map(f => { const i = f.path.lastIndexOf('/'), p = esc(f.path), name = esc(f.path.slice(i + 1));
+    return `<div class="frow"><div class="name"><b title="${p}">${name}</b><small>${B(f.size)}, ${date(f.modified)}</small></div>
+      <button class="round" data-act="openFile" data-path="${p}" aria-label="Open ${name}">${ic('play', 18)}</button>
+      <button class="round danger" data-act="trashFile" data-path="${p}" aria-label="Move ${name} to trash">${ic('trash', 18)}</button>
+      <button class="btn danger" style="min-height:44px;padding:8px 12px;font-size:14px" data-act="deleteFile" data-path="${p}" aria-label="Delete ${name} permanently">Delete</button></div>`; }).join('');
+}
+
+function storage() {
+  const s = S.storage, r = S.files, used = s ? s.total - s.free : 0;
+  const summary = s ? `<section class="card"><div class="card-h"><h2>Phone storage</h2></div>
+    <div style="display:grid;place-items:center">${gauge(used / s.total * 100, Math.round(used / s.total * 100) + '%', 'used')}</div>
+    <div class="tiles2" style="margin-top:10px;text-align:center"><div><b>${B(used)}</b><br><small class="muted">Used</small></div><div><b>${B(s.free)}</b><br><small class="muted">Free of ${B(s.total)}</small></div></div></section>` : '';
+  if (!S.perms.files) return summary + permCard('files');
+  if (S.scan) return summary + `<section class="card"><div class="card-h"><h2>Sorting your files</h2><button class="btn ghost" data-act="stopScan">Stop</button></div>
+    <div class="progress"><i></i></div><b>${(S.scan.files || 0).toLocaleString()} files, ${B(S.scan.size)}</b><div class="path">${esc(S.scan.current || '')}</div></section>`;
+  if (!r) return summary + `<section class="card"><div class="empty">Sort your files by type to see what's using space.<br><br><button class="btn" data-act="scan">Scan storage</button></div></section>`;
+  const max = Math.max(1, ...r.categories.map(c => c.size));
+  return summary + `<section class="card wide"><div class="card-h"><h2>By file type</h2><button class="link" data-act="scan">Rescan</button></div>
+    <div class="catbar" role="img" aria-label="${r.categories.map(c => `${c.name} ${B(c.size)}`).join(', ')}">${inSlotOrder(r.categories).map(c => `<i style="width:${c.size / Math.max(1, r.total) * 100}%;background:${FILECATS[c.name]}"></i>`).join('')}</div>
+    ${r.categories.map(c => { const open = S.openCat === c.name;
+      // Apps jumps to the Apps tab; System has nothing to list, so it isn't a button.
+      const attrs = c.name === 'Apps' ? 'data-act="nav" data-v="apps"' : c.fixed ? '' : `data-act="toggleCat" data-c="${c.name}" aria-expanded="${open}"`;
+      const tag = attrs ? 'button' : 'div';
+      const sub = c.name === 'Apps' ? `${S.apps.length} apps and their data` : c.name === 'System' ? 'Android, caches and files AppDash can\'t see' : plural(c.count, 'file');
+      return `<${tag} class="catrow" ${attrs}><span class="dot" style="background:${FILECATS[c.name]}"></span>
+        <span><b>${c.name}</b><small>${sub}</small><span class="pbar"><i style="width:${c.size / max * 100}%;background:${FILECATS[c.name]}"></i></span></span>
+        <b>${B(c.size)}</b>${attrs ? ic('chev', 16) : '<span></span>'}</${tag}>${open ? fileRows(c) : ''}`; }).join('')}
+    <p class="muted small" style="margin:10px 0 0">Each type lists its 100 largest files. Trash keeps photos, videos and audio for 30 days. Delete removes a file for good.</p></section>`;
+}
+
+// ---------- Actions ----------
+let toastT;
+function toast(msg, err) { const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast show' + (err ? ' err' : ''); clearTimeout(toastT); toastT = setTimeout(() => t.className = 'toast', 3500); }
+const fail = e => toast(e.message, true);
+
+async function load() {
+  S.loading = true; render();
+  try {
+    const [res, st, perms] = await Promise.all([call('apps'), call('storage'), call('perms')]);
+    S.apps = res.apps; S.usageAccess = res.usageAccess; S.storage = st; S.perms = perms; S.sel.clear();
+  } catch (e) { fail(e); }
+  S.loading = false; render();
+  if (S.perms.files && !S.files && !S.scan) scan();
+}
+
+async function scan() {
+  if (S.scan) return;
+  S.scan = { files: 0, size: 0 }; render();
+  try { const r = await call('files'); if (r) S.files = r; } catch (e) { fail(e); }
+  S.scan = null; render();
+}
+
+async function fileAction(cmd, path, question, done) {
+  const name = path.slice(path.lastIndexOf('/') + 1);
+  if (question && !confirm(question(name))) return;
+  try { S.files = await call(cmd, { path }); S.storage = await call('storage'); toast(done(name)); render(); } catch (e) { fail(e); }
+}
+
+async function checkApp() {
+  S.appUpd = null; if (S.view === 'home') render();
+  try { S.appUpd = await call('updateCheck'); } catch (e) { S.appUpd = { error: e.message }; }
+  if (S.view === 'home') render();
+}
+
+function setTheme(t) { document.documentElement.dataset.theme = t; paintThemeBtn(); call('theme', { theme: t }).catch(fail); }
+function paintThemeBtn() {
+  const dark = document.documentElement.dataset.theme === 'dark', b = document.getElementById('themeBtn');
+  b.innerHTML = ic(dark ? 'sun' : 'moon', 20); b.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+}
+
+document.addEventListener('click', async e => {
+  const t = e.target.closest('[data-act]'); if (!t || t.disabled) return;
+  const d = t.dataset;
+  switch (d.act) {
+    case 'nav': S.view = d.v; S.openApp = null; S.openCat = null; render(); document.getElementById('view').scrollTop = 0; break;
+    case 'cat': S.cat = d.c; S.view = 'apps'; render(); break;
+    case 'filterCat': S.cat = d.c; render(); break;
+    case 'chart': S.chart = d.m; render(); break;
+    case 'toggleApp': S.openApp = S.openApp === d.id ? null : d.id; render(); break;
+    case 'toggleCat': S.openCat = S.openCat === d.c ? null : d.c; render(); break;
+    case 'refresh': load(); break;
+    case 'theme': setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'); break;
+    case 'grant': call('grant', { which: d.w }).catch(fail); break;
+    case 'open': case 'info': case 'store': call(d.act, { id: d.id }).catch(fail); break;
+    case 'uninstall': call('uninstall', { id: d.id }).then(() => load()).catch(fail); break;
+    case 'uninstallSel': {
+      const picked = S.apps.filter(a => S.sel.has(a.id));
+      if (!picked.length || !confirm(`Uninstall ${picked.length} apps?\n\n${picked.map(a => a.name).join('\n')}\n\nAndroid asks you to confirm each one.`)) break;
+      S.bulk = { done: 0, total: picked.length, name: picked[0].name }; render();
+      try { const n = await call('uninstallMany', { ids: picked.map(a => a.id) }); toast(`Finished ${n} uninstalls`); } catch (err) { fail(err); }
+      S.bulk = null; load(); break;
+    }
+    case 'scan': S.files = null; scan(); break;
+    case 'stopScan': call('cancelFiles'); break;
+    case 'openFile': call('openFile', { path: d.path }).catch(fail); break;
+    case 'trashFile': fileAction('trashFile', d.path, null, n => `Moved ${n} to the trash`); break;
+    case 'deleteFile': fileAction('deleteFile', d.path, n => `Delete ${n} permanently?\n\nIt won't go to the trash and can't be recovered.`, n => `Deleted ${n}`); break;
+    case 'appCheck': checkApp(); break;
+    case 'appInstall':
+      S.appUpd = { ...S.appUpd, percent: 0 }; render();
+      call('updateInstall').catch(err => { fail(err); S.appUpd = { ...S.appUpd, percent: null }; render(); });
+      break;
+  }
+});
+document.addEventListener('change', e => {
+  const sel = e.target.dataset.sel;
+  if (sel) {
+    const ids = sel === 'all' ? rare().map(a => a.id) : [sel];
+    ids.forEach(id => e.target.checked ? S.sel.add(id) : S.sel.delete(id));
+    render(); document.querySelector(`[data-sel="${CSS.escape(sel)}"]`)?.focus(); return;
+  }
+  const k = e.target.dataset.change; if (k) { S[k] = e.target.value; render(); }
+});
+document.addEventListener('input', e => {
+  if (e.target.id !== 'q') return;
+  S.q = e.target.value; render();
+  const q = document.getElementById('q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length);
+});
+
+// Called by MainActivity: system back closes open panels first, then returns home.
+window.onBack = () => {
+  if (S.openApp || S.openCat) { S.openApp = S.openCat = null; render(); return true; }
+  if (S.view !== 'home') { S.view = 'home'; render(); return true; }
+  return false;
+};
+// Called when returning from Settings: pick up newly granted access.
+window.onResume = async () => {
+  if (!S.apps.length) return;
+  const p = await call('perms').catch(() => S.perms);
+  if (p.usage !== S.perms.usage || p.files !== S.perms.files) load();
+};
+
+document.getElementById('refreshBtn').innerHTML = ic('update', 20);
+paintThemeBtn();
+load(); checkApp();
+</script>
+</body>
+</html>

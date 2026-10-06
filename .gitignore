@@ -1,0 +1,21 @@
+# .NET build output
+bin/
+obj/
+.vs/
+*.user
+
+# Windows release output (built by build-release.ps1, published as GitHub release assets)
+publish/
+releases/
+
+# Android build output
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/releases/
+
+# Android signing key + its password: never commit. Back these up somewhere safe instead.
+android/*.jks
+android/*.keystore
+android/keystore.properties

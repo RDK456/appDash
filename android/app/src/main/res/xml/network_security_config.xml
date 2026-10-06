@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <!-- 10.0.2.2 is the host PC as seen from the emulator: lets you test an update feed served locally.
+         Updates are still safe over http: the APK's SHA-256 is checked, and Android only accepts an
+         update signed with the same key as the installed app. -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>
