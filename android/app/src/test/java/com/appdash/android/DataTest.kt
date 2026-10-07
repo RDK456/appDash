@@ -48,6 +48,13 @@ class DataTest {
         assertEquals(0, AppUpdates.pickApk(listOf("MyApp-1.2.apk", "notes.txt"), listOf("arm64-v8a"))) // single plain APK
     }
 
+    @Test fun playPageVersion() {
+        // Shape of the data block on a Play details page (trimmed).
+        assertEquals("157.0", AppUpdates.playVersion("""...,[[["157.0"]],[[[37,"8.0"]]],..."""))
+        assertEquals(null, AppUpdates.playVersion("""...,[[["Varies with device"]],[[[24]]],..."""))
+        assertEquals(null, AppUpdates.playVersion("<html>no data</html>"))
+    }
+
     @Test fun repoInput() {
         assertEquals("ImranR98/Obtainium", AppUpdates.normalizeRepo("ImranR98/Obtainium"))
         assertEquals("ImranR98/Obtainium", AppUpdates.normalizeRepo("https://github.com/ImranR98/Obtainium/releases"))

@@ -15,8 +15,8 @@ import java.net.URL
 import java.util.concurrent.Executors
 
 // Where each app came from, and whether that source has something newer.
-// Play Store and the other stores have no public "is there an update?" API for other apps, so those are opened in
-// their store. F-Droid and GitHub publish their releases openly, so those are checked here.
+// F-Droid and GitHub publish their releases openly, and the Play Store's public app page lists the current version,
+// so those are checked here. Other stores have no public listing, so those are opened in their store.
 object AppUpdates {
     private val STORES = mapOf(
         "com.android.vending" to "Play Store",
@@ -89,6 +89,7 @@ object AppUpdates {
             when {
                 repo.isNotEmpty() -> github(repo, info.versionName ?: "", o)
                 src == "F-Droid" -> fdroid(ai.packageName, info.longVersionCode, o)
+                src == "Play Store" -> play(ai.packageName, info.versionName ?: "", o)
             }
         } catch (e: Exception) { o.put("error", e.message ?: e.toString()) }
         return o
@@ -102,6 +103,19 @@ object AppUpdates {
         val name = (0 until pkgs.length()).map(pkgs::getJSONObject).firstOrNull { it.getLong("versionCode") == suggested }?.optString("versionName")
         o.put("available", name ?: "build $suggested").put("via", "fdroid")
     }
+
+    // Play has no update API for other apps, but its public page lists the current version,
+    // except for apps that ship a different build per phone ("Varies with device").
+    // ponytail: reads Play's page data by pattern; if Google changes the layout this reports "no version", never a false update.
+    private fun play(pkg: String, current: String, o: JSONObject) {
+        val page = getText("https://play.google.com/store/apps/details?id=$pkg&hl=en&gl=US") ?: run { o.put("note", "Not listed on the Play Store."); return }
+        val latest = playVersion(page) ?: run { o.put("note", "Play lists a different version per phone. Open it in the Play Store to check."); return }
+        o.put("latest", latest).put("via", "play")
+        if (isNewer(latest, current) == true) o.put("available", latest)
+    }
+
+    internal fun playVersion(page: String): String? =
+        Regex("""\[\[\["([^"]{1,40})"]],\[\[\[\d+""").find(page)?.groupValues?.get(1)?.takeIf { v -> v.any(Char::isDigit) }
 
     private fun github(repo: String, current: String, o: JSONObject) {
         val rel = JSONObject(getText("https://api.github.com/repos/$repo/releases/latest") ?: throw IllegalStateException("$repo has no published release."))

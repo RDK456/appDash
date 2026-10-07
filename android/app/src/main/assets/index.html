@@ -667,7 +667,8 @@ function updRow(i, action) {
   const ver = i.available ? `${esc(i.version)} to ${esc(i.available)}` : esc(i.version);
   const detail = i.error ? `<small class="err">${esc(i.error)}</small>`
     : i.note ? `<small class="muted">${esc(i.note)}</small>`
-    : i.repo ? `<small class="muted">${esc(i.repo)}${i.latest && !i.available ? `, latest ${esc(i.latest)}` : ''}</small>` : '';
+    : i.repo ? `<small class="muted">${esc(i.repo)}${i.latest && !i.available ? `, latest ${esc(i.latest)}` : ''}</small>`
+    : i.latest && !i.available ? `<small class="muted">Up to date (Play has ${esc(i.latest)})</small>` : '';
   return `<div class="row">${appIc(a)}<div class="name"><b>${esc(a.name || i.name)}</b><small>${ver}</small>${detail}</div>
     <span class="src ${i.via === 'github' ? 'github' : ''}">${i.repo ? 'GitHub' : esc(i.source)}</span>${action}</div>`;
 }
@@ -676,6 +677,7 @@ function updateAction(i) {
   const pct = S.installing[i.id];
   if (pct != null) return `<span class="stat"><b>${pct}%</b></span>`;
   if (i.via === 'github' && i.apkUrl) return `<button class="btn ubtn" data-act="installUpd" data-id="${esc(i.id)}" data-name="${esc(i.name)}" aria-label="Update ${esc(i.name)}">Update</button>`;
+  if (i.via === 'play' && i.available) return `<button class="btn ubtn" data-act="openStore" data-id="${esc(i.id)}" aria-label="Update ${esc(i.name)} in the Play Store">Update</button>`;
   return `<button class="btn ghost ubtn" data-act="openStore" data-id="${esc(i.id)}" aria-label="Open ${esc(i.name)} in ${esc(i.source)}">Open</button>`;
 }
 
@@ -684,7 +686,7 @@ function updates() {
   const when = u ? `Checked at ${new Date(u.checkedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.` : '';
   const head = `<section class="card wide"><div class="card-h"><h2>App updates</h2>
       <button class="btn ghost ubtn" data-act="checkUpd" ${S.updBusy ? 'disabled' : ''}>${S.updBusy ? `<span class="spin">${ic('reel', 16)}</span>Checking` : 'Check now'}</button></div>
-    <p class="muted small" style="margin:0">${when} F-Droid apps and apps you link to GitHub are checked here. Play Store and other stores don't share update info with other apps, so AppDash opens them for you.</p></section>`;
+    <p class="muted small" style="margin:0">${when} Play Store, F-Droid and GitHub-linked apps are checked here. Updates install in their own store. Play lists a different version per phone for some apps, and other stores don't share versions, so those open in their store.</p></section>`;
   if (!u) return head + (S.updBusy ? '' : `<section class="card wide"><div class="empty">Check to see which apps have updates.</div></section>`);
   const by = f => u.items.filter(f).sort((x, y) => x.name.localeCompare(y.name));
   const avail = by(i => i.available);
@@ -696,7 +698,7 @@ function updates() {
   const trackBtn = i => `<button class="btn ghost ubtn" data-act="linkRepo" data-id="${esc(i.id)}" data-name="${esc(i.name)}" data-repo="${esc(i.repo || '')}" aria-label="${i.repo ? 'Change GitHub repo for' : 'Track on GitHub:'} ${esc(i.name)}">${i.repo ? 'Change' : 'Track'}</button>`;
   return head
     + (avail.length ? card('Updates available', avail, '', i => updRow(i, updateAction(i)))
-       : `<section class="card wide"><div class="empty">No updates found from F-Droid or GitHub.</div></section>`)
+       : `<section class="card wide"><div class="empty">No updates found.</div></section>`)
     + card('Play Store', play, '<button class="link" data-act="openPlay">Open Play Store</button>', i => updRow(i, updateAction(i)))
     + card('Other stores', stores, '', i => updRow(i, updateAction(i)))
     + card('Installed from files', side, '', i => updRow(i, trackBtn(i)))
