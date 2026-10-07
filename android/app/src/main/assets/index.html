@@ -45,11 +45,16 @@ header{display:flex;align-items:center;gap:8px;padding:12px 16px 8px}
 header h1{font-size:24px;margin:0;font-weight:800;letter-spacing:-.02em;flex:1;min-width:0}
 .icon-btn{width:44px;height:44px;border-radius:50%;border:0;background:var(--panel);display:grid;place-items:center;box-shadow:var(--shadow);color:var(--ink-2)}
 main{flex:1;overflow-y:auto;overflow-x:hidden;padding:4px 16px 24px;display:grid;gap:16px;align-content:start}
-nav.tabs{display:grid;grid-template-columns:repeat(4,1fr);background:var(--panel);border-top:1px solid var(--line)}
+nav.tabs{display:grid;grid-template-columns:repeat(5,1fr);background:var(--panel);border-top:1px solid var(--line)}
 nav.tabs button{border:0;background:none;display:grid;justify-items:center;gap:2px;padding:8px 4px 10px;min-height:60px;font-size:12.5px;font-weight:600;color:var(--muted)}
 nav.tabs button[aria-current=page]{color:var(--accent)}
 nav.tabs button[aria-current=page] .pill{background:var(--accent-soft)}
-nav.tabs .pill{width:56px;height:30px;border-radius:99px;display:grid;place-items:center}
+nav.tabs .pill{width:52px;height:30px;border-radius:99px;display:grid;place-items:center;position:relative}
+nav.tabs .nb{position:absolute;top:-4px;right:2px;min-width:18px;height:18px;padding:0 5px;border-radius:99px;background:var(--warn);color:var(--panel);font-size:11px;font-weight:700;line-height:18px}
+.src{font-size:11.5px;font-weight:700;border-radius:99px;padding:2px 8px;background:var(--line);color:var(--ink-2);white-space:nowrap}
+.src.github{background:var(--accent-soft);color:var(--accent)}
+.err{color:var(--rare-ink);font-size:12.5px}
+.ubtn{min-height:40px;padding:8px 14px;font-size:14px;flex:none}
 
 .card{background:var(--panel);border-radius:var(--r-xl);padding:18px 16px;box-shadow:var(--shadow);min-width:0}
 .card-h{display:flex;align-items:center;gap:10px;margin-bottom:12px}
@@ -188,7 +193,13 @@ const call = (cmd, arg = {}) => new Promise((res, rej) => {
 window.__native = m => {
   if (m.event === 'files') { if (S.scan) { S.scan = m; if (S.view === 'storage') render(); } return; }
   if (m.event === 'uninstall') { S.bulk = m; render(); return; }
-  if (m.event === 'appUpdate') { S.appUpd = m.error ? { ...S.appUpd, percent: null } : { ...S.appUpd, percent: m.percent }; if (m.error) toast(m.error, true); render(); return; }
+  if (m.event === 'appUpdate') { S.appUpd = m.error ? { ...S.appUpd, percent: null } : { ...S.appUpd, percent: m.percent ?? S.appUpd?.percent }; if (m.error) toast(m.error, true); render(); return; }
+  if (m.event === 'install') {
+    if (m.error) { delete S.installing[m.id]; toast(m.error, true); }
+    else if (m.done) { delete S.installing[m.id]; toast('Updated'); checkUpdates(); load(); }
+    else S.installing[m.id] = m.percent;
+    if (S.view === 'updates') render(); return;
+  }
   const p = pending.get(m.id); pending.delete(m.id);
   if (p) m.error ? p.rej(new Error(m.error)) : p.res(m.data);
 };
@@ -240,16 +251,18 @@ const appIc = a => `<span class="app-ic">${a.icon ? `<img src="${a.icon}" alt=""
 
 // ---------- State ----------
 const S = { view: 'home', apps: [], usageAccess: true, perms: { usage: true, files: true }, storage: null, files: null, scan: null,
-  loading: true, q: '', cat: 'All', sort: 'size', chart: 'size', openApp: null, openCat: null, sel: new Set(), bulk: null, appUpd: null };
-const VIEWS = { home:['AppDash','grid','Home'], apps:['Apps','list','Apps'], usage:['Usage','activity','Usage'], storage:['Storage','disk','Storage'] };
+  loading: true, q: '', cat: 'All', sort: 'size', chart: 'size', openApp: null, openCat: null, sel: new Set(), bulk: null, appUpd: null,
+  upd: null, updBusy: false, installing: {} };
+const VIEWS = { home:['AppDash','grid','Home'], apps:['Apps','list','Apps'], updates:['Updates','update','Updates'], usage:['Usage','activity','Usage'], storage:['Storage','disk','Storage'] };
+const updCount = () => (S.upd?.items || []).filter(i => i.available).length;
 
 function render() {
   document.getElementById('title').textContent = VIEWS[S.view][0];
   document.getElementById('tabs').innerHTML = Object.entries(VIEWS).map(([k, [, i, label]]) =>
-    `<button data-act="nav" data-v="${k}" ${S.view === k ? 'aria-current="page"' : ''}><span class="pill">${ic(i, 22)}</span>${label}</button>`).join('');
+    `<button data-act="nav" data-v="${k}" ${S.view === k ? 'aria-current="page"' : ''}><span class="pill">${ic(i, 22)}${k === 'updates' && updCount() ? `<span class="nb">${updCount()}</span>` : ''}</span>${label}</button>`).join('');
   const v = document.getElementById('view');
   if (S.loading && !S.apps.length) { v.innerHTML = `<div class="skeleton wide"><span class="spin">${ic('update', 28)}</span>Reading your apps…</div>`; return; }
-  v.innerHTML = { home, apps, usage, storage }[S.view]();
+  v.innerHTML = { home, apps, updates, usage, storage }[S.view]();
 }
 
 // ---------- Shared pieces ----------
@@ -355,7 +368,7 @@ function appRow(a) {
       <div class="name"><b>${esc(a.name)}</b><small>${esc(a.version || a.id)}</small></div>
       <div class="stat"><b>${B(a.size)}</b>${S.usageAccess ? ago(a.lastUsed) : ''}</div></button>
     ${open ? `<div class="adetail">
-      <dl><dt>Category</dt><dd>${esc(a.category)}</dd>${S.usageAccess ? `<dt>Screen time, 30 days</dt><dd>${mins(a.fgMs)}</dd><dt>Last used</dt><dd>${ago(a.lastUsed)}</dd>` : ''}
+      <dl><dt>Category</dt><dd>${esc(a.category)}</dd><dt>Installed from</dt><dd>${esc(a.source)}</dd>${S.usageAccess ? `<dt>Screen time, 30 days</dt><dd>${mins(a.fgMs)}</dd><dt>Last used</dt><dd>${ago(a.lastUsed)}</dd>` : ''}
         <dt>Installed</dt><dd>${date(a.installed)}</dd><dt>Updated</dt><dd>${date(a.updated)}</dd></dl>
       <div class="btns">
         ${a.canOpen ? `<button class="btn ghost" data-act="open" data-id="${esc(a.id)}">Open</button>` : ''}
@@ -379,6 +392,57 @@ function apps() {
     ${!S.perms.usage ? permCard('usage') : ''}
     ${section('Your apps', mine)}
     ${section('System apps', sys, 'Came with your phone. You can remove updates to some, but not uninstall them.')}`;
+}
+
+// ---------- Updates ----------
+// F-Droid and linked GitHub repos are checked here. Play and the other stores don't tell other apps about
+// updates, so those rows open the store that installed the app.
+function updRow(i, action) {
+  const a = S.apps.find(x => x.id === i.id) || { name: i.name, category: 'Other' };
+  const ver = i.available ? `${esc(i.version)} to ${esc(i.available)}` : esc(i.version);
+  const detail = i.error ? `<small class="err">${esc(i.error)}</small>`
+    : i.note ? `<small class="muted">${esc(i.note)}</small>`
+    : i.repo ? `<small class="muted">${esc(i.repo)}${i.latest && !i.available ? `, latest ${esc(i.latest)}` : ''}</small>` : '';
+  return `<div class="row">${appIc(a)}<div class="name"><b>${esc(a.name || i.name)}</b><small>${ver}</small>${detail}</div>
+    <span class="src ${i.via === 'github' ? 'github' : ''}">${i.repo ? 'GitHub' : esc(i.source)}</span>${action}</div>`;
+}
+
+function updateAction(i) {
+  const pct = S.installing[i.id];
+  if (pct != null) return `<span class="stat"><b>${pct}%</b></span>`;
+  if (i.via === 'github' && i.apkUrl) return `<button class="btn ubtn" data-act="installUpd" data-id="${esc(i.id)}" data-name="${esc(i.name)}" aria-label="Update ${esc(i.name)}">Update</button>`;
+  return `<button class="btn ghost ubtn" data-act="openStore" data-id="${esc(i.id)}" aria-label="Open ${esc(i.name)} in ${esc(i.source)}">Open</button>`;
+}
+
+function updates() {
+  const u = S.upd;
+  const when = u ? `Checked at ${new Date(u.checkedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.` : '';
+  const head = `<section class="card wide"><div class="card-h"><h2>App updates</h2>
+      <button class="btn ghost ubtn" data-act="checkUpd" ${S.updBusy ? 'disabled' : ''}>${S.updBusy ? `<span class="spin">${ic('update', 16)}</span>Checking` : 'Check now'}</button></div>
+    <p class="muted small" style="margin:0">${when} F-Droid apps and apps you link to GitHub are checked here. Play Store and other stores don't share update info with other apps, so AppDash opens them for you.</p></section>`;
+  if (!u) return head + (S.updBusy ? '' : `<section class="card wide"><div class="empty">Check to see which apps have updates.</div></section>`);
+  const by = f => u.items.filter(f).sort((x, y) => x.name.localeCompare(y.name));
+  const avail = by(i => i.available);
+  const play = by(i => !i.available && !i.repo && i.source === 'Play Store');
+  // Preinstalled apps get their updates through the phone's store, so they sit with the stores, not GitHub.
+  const stores = by(i => !i.available && !i.repo && !['Play Store', 'Sideloaded'].includes(i.source));
+  const side = by(i => !i.available && (i.repo || i.source === 'Sideloaded'));
+  const card = (title, items, extra, row) => items.length ? `<section class="card wide"><div class="card-h"><h2>${title} <span class="muted">(${items.length})</span></h2>${extra || ''}</div>${items.map(row).join('')}</section>` : '';
+  const trackBtn = i => `<button class="btn ghost ubtn" data-act="linkRepo" data-id="${esc(i.id)}" data-name="${esc(i.name)}" data-repo="${esc(i.repo || '')}" aria-label="${i.repo ? 'Change GitHub repo for' : 'Track on GitHub:'} ${esc(i.name)}">${i.repo ? 'Change' : 'Track'}</button>`;
+  return head
+    + (avail.length ? card('Updates available', avail, '', i => updRow(i, updateAction(i)))
+       : `<section class="card wide"><div class="empty">No updates found from F-Droid or GitHub.</div></section>`)
+    + card('Play Store', play, '<button class="link" data-act="openPlay">Open Play Store</button>', i => updRow(i, updateAction(i)))
+    + card('Other stores', stores, '', i => updRow(i, updateAction(i)))
+    + card('Installed from files', side, '', i => updRow(i, trackBtn(i)))
+    + `<p class="muted small wide" style="margin:0">Play Store: open it, tap your profile picture, then Manage apps &amp; device to update everything at once.</p>`;
+}
+
+async function checkUpdates() {
+  if (S.updBusy) return;
+  S.updBusy = true; if (S.view === 'updates') render();
+  try { S.upd = await call('updates'); } catch (e) { fail(e); }
+  S.updBusy = false; render();
 }
 
 // ---------- Usage ----------
@@ -501,6 +565,24 @@ document.addEventListener('click', async e => {
     case 'openFile': call('openFile', { path: d.path }).catch(fail); break;
     case 'trashFile': fileAction('trashFile', d.path, null, n => `Moved ${n} to the trash`); break;
     case 'deleteFile': fileAction('deleteFile', d.path, n => `Delete ${n} permanently?\n\nIt won't go to the trash and can't be recovered.`, n => `Deleted ${n}`); break;
+    case 'checkUpd': checkUpdates(); break;
+    case 'openStore': call('openStore', { id: d.id }).catch(fail); break;
+    case 'openPlay': call('openPlay').catch(fail); break;
+    case 'installUpd':
+      S.installing[d.id] = 0; render();
+      call('installUpdate', { id: d.id }).catch(err => { delete S.installing[d.id]; fail(err); render(); });
+      break;
+    case 'linkRepo': {
+      const repo = prompt(`GitHub repo for ${d.name}\n\nowner/name or a github.com link. Leave empty to stop tracking.`, d.repo);
+      if (repo === null) break;
+      try {
+        const item = await call('linkRepo', { id: d.id, repo });
+        S.upd.items = S.upd.items.map(i => i.id === item.id ? item : i);
+        toast(repo ? (item.error ? `Linked, but: ${item.error}` : item.available ? `${item.name} ${item.available} is available` : `Tracking ${item.repo}`) : 'Stopped tracking');
+        render();
+      } catch (err) { fail(err); }
+      break;
+    }
     case 'appCheck': checkApp(); break;
     case 'appInstall':
       S.appUpd = { ...S.appUpd, percent: 0 }; render();
@@ -538,7 +620,7 @@ window.onResume = async () => {
 
 document.getElementById('refreshBtn').innerHTML = ic('update', 20);
 paintThemeBtn();
-load(); checkApp();
+load(); checkApp(); checkUpdates();
 </script>
 </body>
 </html>

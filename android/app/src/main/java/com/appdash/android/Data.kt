@@ -57,6 +57,7 @@ object Data {
                 .put("version", info.versionName ?: "")
                 .put("kind", if (system) "system" else "user")
                 .put("category", category(ai.category, system))
+                .put("source", AppUpdates.source(pm, ai))
                 .put("size", size)
                 .put("lastUsed", use?.first ?: JSONObject.NULL)
                 .put("fgMs", use?.second ?: 0L)

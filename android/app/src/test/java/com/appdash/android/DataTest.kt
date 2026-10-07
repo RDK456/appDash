@@ -31,6 +31,31 @@ class DataTest {
         assertEquals("Other", Data.category(ApplicationInfo.CATEGORY_UNDEFINED, false))
     }
 
+    @Test fun versionComparison() {
+        assertEquals(true, AppUpdates.isNewer("v1.10.0", "1.9.2"))       // numeric, not alphabetical
+        assertEquals(false, AppUpdates.isNewer("1.0", "1.0.0"))          // missing parts count as 0
+        assertEquals(false, AppUpdates.isNewer("v2.3.1", "2.3.1 (204)")) // build suffix ignored
+        assertEquals(true, AppUpdates.isNewer("2.4.0-beta1", "2.3.9"))
+        assertEquals(null, AppUpdates.isNewer("nightly", "1.0"))         // nothing to compare: don't claim an update
+    }
+
+    @Test fun apkMatchesThePhoneCpu() {
+        val names = listOf("app-x86_64.apk", "app-arm64-v8a.apk", "app-universal.apk", "checksums.txt")
+        assertEquals(1, AppUpdates.pickApk(names, listOf("arm64-v8a", "armeabi-v7a")))
+        assertEquals(0, AppUpdates.pickApk(names, listOf("x86_64")))
+        assertEquals(2, AppUpdates.pickApk(names, listOf("riscv64")))                                   // falls back to universal
+        assertEquals(-1, AppUpdates.pickApk(listOf("app-x86_64.apk"), listOf("arm64-v8a")))            // never the wrong CPU
+        assertEquals(0, AppUpdates.pickApk(listOf("MyApp-1.2.apk", "notes.txt"), listOf("arm64-v8a"))) // single plain APK
+    }
+
+    @Test fun repoInput() {
+        assertEquals("ImranR98/Obtainium", AppUpdates.normalizeRepo("ImranR98/Obtainium"))
+        assertEquals("ImranR98/Obtainium", AppUpdates.normalizeRepo("https://github.com/ImranR98/Obtainium/releases"))
+        assertEquals("owner/repo", AppUpdates.normalizeRepo("github.com/owner/repo.git"))
+        assertEquals(null, AppUpdates.normalizeRepo("just-a-name"))
+        assertEquals(null, AppUpdates.normalizeRepo("owner/re po"))
+    }
+
     @Test fun slotOrderMatchesThePalette() {
         // index.html colors segments by this order; changing it breaks the validated adjacent pairs.
         assertEquals(listOf("Apps", "Videos", "Images", "Archives", "Audio", "Documents", "System", "Other"), Data.ORDER)

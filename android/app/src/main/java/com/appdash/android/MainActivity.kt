@@ -77,17 +77,29 @@ class MainActivity : Activity() {
         results.remove(requestCode)?.invoke(resultCode)
     }
 
-    // PackageInstaller reports back here while updating AppDash itself.
+    // PackageInstaller reports back here, for AppDash's own update and for GitHub app updates.
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent.action != Updater.ACTION_STATUS) return
+        if (intent.action != Installer.ACTION_STATUS) return
+        val pkg = intent.getStringExtra("pkg") ?: packageName
+        val event = if (pkg == packageName) "appUpdate" else "install"
         when (val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)) {
             PackageInstaller.STATUS_PENDING_USER_ACTION ->
                 @Suppress("DEPRECATION") (intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT))?.let(::startActivity)
-            PackageInstaller.STATUS_SUCCESS -> Unit // Android restarts us on the new version
-            else -> push(JSONObject().put("event", "appUpdate")
-                .put("error", intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE) ?: "Update failed ($status)."))
+            PackageInstaller.STATUS_SUCCESS -> push(JSONObject().put("event", event).put("id", pkg).put("done", true)) // AppDash itself just restarts
+            else -> push(JSONObject().put("event", event).put("id", pkg).put("error", installError(status, intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE).orEmpty())))
         }
+    }
+
+    // Android's install errors are codes; say what happened instead.
+    private fun installError(status: Int, msg: String) = when {
+        "inconsistent with" in msg -> "That APK is a different app, not this one. Check the linked GitHub repo."
+        "UPDATE_INCOMPATIBLE" in msg || status == PackageInstaller.STATUS_FAILURE_CONFLICT ->
+            "That APK is signed by a different developer than the installed app, so Android won't install it over this one."
+        status == PackageInstaller.STATUS_FAILURE_ABORTED -> "Update cancelled."
+        status == PackageInstaller.STATUS_FAILURE_STORAGE -> "Not enough free space to install the update."
+        status == PackageInstaller.STATUS_FAILURE_BLOCKED -> "Android blocked this install. Check Play Protect or install permissions."
+        else -> msg.ifEmpty { "Update failed ($status)." }
     }
 
     inner class Bridge {
@@ -137,6 +149,15 @@ class MainActivity : Activity() {
                 val t = a.getString("theme").takeIf { it == "dark" || it == "light" } ?: throw IllegalArgumentException("Unknown theme.")
                 prefs.edit().putString("theme", t).apply(); applyTheme(t); true
             }
+            "updates" -> bg { AppUpdates.check(this) }
+            "linkRepo" -> bg { AppUpdates.link(this, a.getString("id"), a.optString("repo")) }
+            "installUpdate" -> bg {
+                val pkg = a.getString("id")
+                AppUpdates.install(this, pkg) { pct -> push(JSONObject().put("event", "install").put("id", pkg).put("percent", pct)) }
+                true
+            }
+            "openStore" -> ui { AppUpdates.openStore(this, a.getString("id")); true }
+            "openPlay" -> ui { AppUpdates.openPlayStore(this); true }
             "updateCheck" -> bg { Updater.check(this) }
             "updateInstall" -> bg { Updater.install(this) { pct -> push(JSONObject().put("event", "appUpdate").put("percent", pct)) }; true }
             else -> answer(id) { throw IllegalArgumentException("Unknown command: $cmd") }
@@ -190,8 +211,6 @@ class MainActivity : Activity() {
 
 // Self-update from a feed: latest.json = {versionCode, versionName, apk, sha256, size}, written by build-release.ps1.
 object Updater {
-    const val ACTION_STATUS = "com.appdash.android.UPDATE_STATUS"
-
     private fun latest() = JSONObject(URL(BuildConfig.UPDATE_FEED).readText())
 
     fun check(ctx: Context): JSONObject {
@@ -205,13 +224,22 @@ object Updater {
             .put("size", l.optLong("size")).put("delta", false) // Android has no delta installs outside Google Play
     }
 
-    // Streams the APK into a PackageInstaller session. Android shows its own confirm screen and only accepts
-    // an APK signed with the same key as this install; the SHA-256 check catches corrupted downloads first.
     fun install(ctx: Context, progress: (Int) -> Unit) {
         val l = latest()
-        val apk = URL(URL(BuildConfig.UPDATE_FEED), l.getString("apk"))
+        Installer.install(ctx, URL(URL(BuildConfig.UPDATE_FEED), l.getString("apk")), l.getString("sha256"), ctx.packageName, progress)
+    }
+}
+
+// Shared by AppDash's own updates and GitHub app updates.
+object Installer {
+    const val ACTION_STATUS = "com.appdash.android.INSTALL_STATUS"
+
+    // Streams the APK into a PackageInstaller session. Android shows its own confirm screen and only accepts an
+    // APK signed with the same key as the installed app; the SHA-256 check (when the source publishes one)
+    // catches corrupted or swapped downloads first.
+    fun install(ctx: Context, apk: URL, sha256: String?, pkg: String, progress: (Int) -> Unit) {
         val installer = ctx.packageManager.packageInstaller
-        val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply { setAppPackageName(ctx.packageName) }
+        val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply { setAppPackageName(pkg) }
         val session = installer.openSession(installer.createSession(params))
         try {
             val digest = MessageDigest.getInstance("SHA-256")
@@ -233,8 +261,8 @@ object Updater {
                 }
             }
             val sha = digest.digest().joinToString("") { "%02x".format(it) }
-            if (!sha.equals(l.getString("sha256"), ignoreCase = true)) throw SecurityException("The download didn't match its checksum, so nothing was installed.")
-            val status = PendingIntent.getActivity(ctx, 0, Intent(ctx, MainActivity::class.java).setAction(ACTION_STATUS),
+            if (sha256 != null && !sha.equals(sha256, ignoreCase = true)) throw SecurityException("The download didn't match its checksum, so nothing was installed.")
+            val status = PendingIntent.getActivity(ctx, pkg.hashCode(), Intent(ctx, MainActivity::class.java).setAction(ACTION_STATUS).putExtra("pkg", pkg),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
             session.commit(status.intentSender)
         } catch (e: Exception) {
