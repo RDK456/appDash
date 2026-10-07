@@ -10,7 +10,7 @@
 </script>
 <title>AppDash</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@600..900&family=JetBrains+Mono:wght@400;500;600;700&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 /* Same tokens as the Windows app (index.html at the repo root). */
 :root{
@@ -171,6 +171,159 @@ select.sel{border:1.5px solid var(--line);background:var(--panel);border-radius:
 .skeleton{display:grid;place-items:center;min-height:50vh;color:var(--muted);gap:12px;text-align:center}
 @media (min-width:700px){main{grid-template-columns:1fr 1fr}.wide{grid-column:1/-1}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* ===== Device (same direction as the Windows app) =====
+   Machined grey body, screwed-in modules, dot-matrix LCD, LED meters, keys with status LEDs. One signal orange.
+   Dark = the black edition. Chart colors (--fc-*) stay the validated palette. */
+:root{
+  --bg:#DCDCD6; --panel:#EFEFEA; --ink:#141414; --ink-2:#3C3C39; --muted:#62625D; --line:#D2D2CB;
+  --accent:#FF4F00; --accent-2:#8A8A84; --accent-soft:#FFE1D2; --on-accent:#141414; --bar:#C9C9C2;
+  --hi:#FF4F00; --hi-2:#FFB08A; --hi-ink:#B23700; --warn:#D7261E; --warn-soft:#F8D9D6; --rare-ink:#B01E17; --hover:#E6E6E0;
+  --body:#C9C9C2; --key:#F7F7F3; --key-edge:#A9A9A2; --screw:#9C9C95; --screw-hi:#E4E4DE;
+  --lcd:#151613; --lcd-ink:#F3F1E8; --led-off:#BDBDB6; --led-green:#1E9E55; --grille:rgba(0,0,0,.22);
+  --r-xl:14px; --r-lg:10px; --r-sm:10px;
+  --shadow:inset 0 1px 0 rgba(255,255,255,.6),0 2px 0 var(--key-edge);
+  --dot:Doto,monospace; --mono:"JetBrains Mono","Roboto Mono",monospace;
+}
+:root[data-theme=dark]{
+  --bg:#0F0F0F; --panel:#1B1B1A; --ink:#ECECE6; --ink-2:#C4C4BE; --muted:#9A9A94; --line:#2C2C2A;
+  --accent:#FF5A14; --accent-2:#6B6B66; --accent-soft:#3A2116; --on-accent:#0F0F0F; --bar:#2E2E2C;
+  --hi:#FF5A14; --hi-2:#7A2E0D; --hi-ink:#FF8A55; --warn:#FF5A4E; --warn-soft:#3A1A18; --rare-ink:#FF8A80; --hover:#232322;
+  --body:#080808; --key:#262625; --key-edge:#050505; --screw:#3A3A38; --screw-hi:#5A5A57;
+  --lcd:#050505; --lcd-ink:#FF6A26; --led-off:#333331; --led-green:#3DDC84; --grille:rgba(255,255,255,.09);
+  --shadow:inset 0 1px 0 rgba(255,255,255,.06),0 2px 0 var(--key-edge);
+}
+body{font-family:"Schibsted Grotesk",system-ui,sans-serif}
+small,.small,.muted,.path,.chip,.src,.stat,.dlegend,.adetail dt,.hbar .hv,.err,.link,.fchip,.seg button,.empty,.skeleton,.search{font-family:var(--mono)}
+
+/* Header: page name on a dot-matrix LCD */
+header h1{flex:0 1 auto;margin-right:auto;background:var(--lcd);color:var(--lcd-ink);font-family:var(--dot);font-weight:800;font-size:25px;
+  text-transform:uppercase;letter-spacing:.02em;padding:4px 14px 2px;border-radius:10px;line-height:1.3;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.6);background-image:linear-gradient(rgba(255,255,255,.035) 50%,transparent 50%);background-size:100% 3px}
+:root[data-theme=dark] header h1{text-shadow:0 0 10px rgba(255,106,38,.45);box-shadow:inset 0 2px 6px rgba(0,0,0,.9),0 0 0 1px #262625}
+.icon-btn{border-radius:10px;background:var(--key);box-shadow:var(--shadow)}
+.icon-btn:active,.btn:active,.round:active,.fchip:active{transform:translateY(2px);box-shadow:none}
+.search{border-radius:10px;box-shadow:inset 0 1px 3px rgba(0,0,0,.12);border:1px solid var(--line)}
+
+/* Modules: four screws, silkscreened label */
+.card{border:1px solid rgba(0,0,0,.06);
+  background:
+    radial-gradient(circle at 10px 10px,var(--screw-hi) 0 1.4px,var(--screw) 1.9px 3.3px,transparent 3.9px),
+    radial-gradient(circle at calc(100% - 10px) 10px,var(--screw-hi) 0 1.4px,var(--screw) 1.9px 3.3px,transparent 3.9px),
+    radial-gradient(circle at 10px calc(100% - 10px),var(--screw-hi) 0 1.4px,var(--screw) 1.9px 3.3px,transparent 3.9px),
+    radial-gradient(circle at calc(100% - 10px) calc(100% - 10px),var(--screw-hi) 0 1.4px,var(--screw) 1.9px 3.3px,transparent 3.9px),
+    var(--panel);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 1px 2px rgba(0,0,0,.12),0 5px 0 -3px rgba(0,0,0,.08)}
+:root[data-theme=dark] .card{border-color:#262625;box-shadow:0 1px 2px rgba(0,0,0,.6)}
+.card-h h2{font-family:var(--mono);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;display:flex;align-items:center;gap:8px}
+.card-h h2::before{content:"";width:9px;height:9px;border-radius:2px;background:var(--accent);flex:none}
+.link{color:var(--ink-2);font-size:12.5px;text-transform:uppercase;letter-spacing:.07em}
+
+/* Keys */
+.btn{color:#141414;border-radius:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 0 #A33300}
+.btn.ghost{background:var(--key);color:var(--ink);border:0;box-shadow:var(--shadow)}
+.btn.danger{background:var(--warn);color:#fff;box-shadow:0 2px 0 #7A120D}
+.btn:disabled{box-shadow:none}
+.round{background:var(--key);box-shadow:var(--shadow)}
+.round.danger{color:var(--warn)}
+.fchip{border:0;background:var(--key);border-radius:8px;box-shadow:var(--shadow);font-size:12.5px;text-transform:uppercase;letter-spacing:.04em}
+.fchip[aria-pressed=true]{background:var(--lcd);color:#FF6A26;transform:translateY(2px);box-shadow:none}
+select.sel{border:0;background:var(--key);box-shadow:var(--shadow)}
+:focus-visible{outline-color:var(--accent);border-radius:8px}
+
+/* Indicator lamps */
+.chip,.src{background:transparent!important;color:var(--ink-2);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;padding:0;display:inline-flex;align-items:center;gap:5px}
+.chip::before,.src::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor}
+.src::before{border-radius:2px;box-shadow:none}
+.chip.often{color:var(--led-green)}
+.chip.rare{color:var(--warn)}
+.chip.sometimes{color:#B08700}
+:root[data-theme=dark] .chip.sometimes{color:#F2C230}
+.src.github{color:var(--hi-ink)}
+
+/* Permission prompt: the orange module */
+.perm{background:var(--accent);border:0;color:#141414;--ink:#141414;--ink-2:#2A1000;--muted:#3A1500;--panel:var(--accent)}
+.perm h2{font-family:var(--dot)!important;font-size:22px!important;font-weight:800;letter-spacing:0!important}
+.perm .card-h h2::before{background:#141414}
+.perm p{color:#2A1000}
+.perm .btn{background:#141414;color:#FF6A26;box-shadow:0 2px 0 #000}
+
+/* LED meters */
+.seg button{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em}
+.seg button[aria-selected=true]::before{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.hbar .ht{background:transparent;border-radius:0}
+.hbar .ht i,:root[data-theme=dark] .hbar .ht i{border-radius:0;background:repeating-linear-gradient(90deg,var(--led-off) 0 6px,transparent 6px 9px)}
+.hbar.on .ht i,:root[data-theme=dark] .hbar.on .ht i{background:repeating-linear-gradient(90deg,var(--accent) 0 6px,transparent 6px 9px);filter:drop-shadow(0 0 5px rgba(255,79,0,.45))}
+.g-track{stroke-dasharray:.6 2.4;stroke-linecap:butt;stroke:var(--ink);opacity:.35;stroke-width:12}
+.g-val{stroke-linecap:butt}
+.g-txt b{font-family:var(--dot);font-weight:800;font-size:clamp(15px,13cqi,22px)}
+.donut-c b{font-family:var(--mono);font-size:12px;letter-spacing:-.02em}
+.tile{border:0;border-radius:10px;background:var(--hover);box-shadow:inset 0 1px 3px rgba(0,0,0,.1)}
+.tile:active{box-shadow:inset 0 1px 3px rgba(0,0,0,.1),0 0 0 2px var(--accent)}
+.meter,.progress,.catbar,.pbar{border-radius:3px;background:var(--hover);box-shadow:inset 0 1px 2px rgba(0,0,0,.15)}
+.meter i,.pbar i{border-radius:0}
+.progress i{background:repeating-linear-gradient(90deg,var(--accent) 0 6px,transparent 6px 9px);border-radius:0}
+
+/* Lists */
+.app-ic{border-radius:10px}
+.arow>button:active,.catrow:active{background:var(--hover)}
+
+/* Tab bar: a row of keys, the open one pressed with its LED lit */
+nav.tabs{background:var(--body);border-top:0;padding:8px 8px 10px;gap:6px;box-shadow:inset 0 1px 0 rgba(0,0,0,.08)}
+nav.tabs button{background:var(--key);border-radius:10px;color:var(--ink-2);font-family:var(--mono);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;
+  min-height:56px;padding:6px 2px 7px;box-shadow:var(--shadow);position:relative;transition:transform .06s}
+nav.tabs button::after{content:"";position:absolute;top:6px;right:7px;width:6px;height:6px;border-radius:50%;background:var(--led-off)}
+nav.tabs button[aria-current=page]{color:var(--ink);transform:translateY(2px);box-shadow:inset 0 1px 3px rgba(0,0,0,.15)}
+nav.tabs button[aria-current=page]::after{background:var(--accent);box-shadow:0 0 8px 1px var(--accent)}
+nav.tabs button[aria-current=page] .pill{background:transparent}
+nav.tabs .pill{height:26px;width:44px}
+nav.tabs .nb{background:var(--lcd);color:#FF6A26;border-radius:4px;font-family:var(--mono);right:-6px}
+
+.toast{background:var(--lcd);color:#FF6A26;font-family:var(--mono);font-weight:500;border-radius:10px}
+.toast.err{background:var(--warn);color:#fff}
+
+.deal .card{animation:deal .3s cubic-bezier(.2,.8,.2,1) both}
+.deal .card:nth-child(2){animation-delay:.04s}.deal .card:nth-child(3){animation-delay:.08s}.deal .card:nth-child(n+4){animation-delay:.12s}
+@keyframes deal{from{opacity:0;transform:translateY(10px)}}
+
+/* Calmer: orange only marks state (LEDs, the lit meter, label squares); keys are graphite, the light LCD is reflective grey-green */
+:root{--accent:#D9602A;--hi:#D9602A;--hi-ink:#A9461A;--accent-soft:#F4E2D8;--screw:#B6B6AF;--screw-hi:#E9E9E3;
+  --lcd:#C7CBBD;--lcd-ink:#1F231B;--btn:#2B2B29;--btn-ink:#F2F2EC;--btn-edge:#000}
+:root[data-theme=dark]{--accent:#E8794A;--hi:#E8794A;--hi-ink:#F09A70;--accent-soft:#33221A;
+  --lcd:#070707;--lcd-ink:#E8935F;--btn:#E2E2DC;--btn-ink:#141414;--btn-edge:#7E7E78}
+header h1{box-shadow:inset 0 1px 3px rgba(0,0,0,.25),0 1px 0 rgba(255,255,255,.5);text-shadow:none!important;background-image:none}
+:root[data-theme=dark] header h1{box-shadow:inset 0 2px 6px rgba(0,0,0,.9),0 0 0 1px #262625}
+.btn,.side-btn{background:var(--btn);color:var(--btn-ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 2px 0 var(--btn-edge)}
+.btn:hover,.side-btn:hover{background:var(--btn);filter:brightness(1.12)}
+.btn.ghost{background:var(--key);color:var(--ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 2px 0 var(--key-edge)}
+.round.lime{background:var(--key);color:var(--accent);box-shadow:0 2px 0 var(--key-edge)}
+.round.lime:hover{background:var(--key);filter:brightness(1.04)}
+.nav[aria-current=page]::after,nav.tabs button[aria-current=page]::after{box-shadow:0 0 6px var(--accent)}
+.chip::before{box-shadow:none}
+.col.on .bar,.bars:hover .col:hover .bar,.hbar.on .ht i,:root[data-theme=dark] .hbar.on .ht i{filter:none}
+.ver .vbar i{background:repeating-linear-gradient(90deg,var(--ink-2) 0 5px,transparent 5px 7px)}
+.fchip[aria-pressed=true],:root:not([data-theme=dark]) .fchip[aria-pressed=true],.nav .count,:root:not([data-theme=dark]) .nav .count,
+nav.tabs .nb,.toast,:root:not([data-theme=dark]) .toast,.tip{background:var(--lcd);color:var(--lcd-ink)}
+.tip small{color:inherit;opacity:.7}
+.toast.err{background:var(--warn);color:#fff}
+/* The portable-apps module and permission prompts are ordinary modules again */
+.promo,.perm{background:
+    radial-gradient(circle at 11px 11px,var(--screw-hi) 0 1.5px,var(--screw) 2px 3.6px,transparent 4.2px),
+    radial-gradient(circle at calc(100% - 11px) 11px,var(--screw-hi) 0 1.5px,var(--screw) 2px 3.6px,transparent 4.2px),
+    radial-gradient(circle at 11px calc(100% - 11px),var(--screw-hi) 0 1.5px,var(--screw) 2px 3.6px,transparent 4.2px),
+    radial-gradient(circle at calc(100% - 11px) calc(100% - 11px),var(--screw-hi) 0 1.5px,var(--screw) 2px 3.6px,transparent 4.2px),
+    var(--panel)}
+:root:not([data-theme=dark]) :is(.promo,.perm){--ink:#141414;--ink-2:#3C3C39;--muted:#62625D;--panel:#EFEFEA}
+:root[data-theme=dark] :is(.promo,.perm){--ink:#ECECE6;--ink-2:#C4C4BE;--muted:#9A9A94;--panel:#1B1B1A}
+.promo,.perm{color:var(--ink)}
+.promo h2,.perm h2{color:var(--ink)}
+.perm p{color:var(--ink-2)}
+.perm .card-h h2::before{background:var(--accent)}
+.promo .btn,.perm .btn{background:var(--btn);color:var(--btn-ink);box-shadow:0 2px 0 var(--btn-edge)}
+.promo .btn.ghost{background:var(--key);color:var(--ink);box-shadow:0 2px 0 var(--key-edge)}
+.float i{background:var(--key);box-shadow:0 2px 0 var(--key-edge),0 6px 12px rgba(0,0,0,.12)}
+.float i:nth-child(1){color:var(--ink)}.float i:nth-child(2){color:var(--accent)}
+.float i:nth-child(4){background:radial-gradient(circle,var(--grille) 1.4px,transparent 1.8px) 0 0/7px 7px,var(--key)}
+.cat .ci,.app-ic[style*="color"]{filter:saturate(.55)}
 </style>
 </head>
 <body>
@@ -261,8 +414,9 @@ function render() {
   document.getElementById('tabs').innerHTML = Object.entries(VIEWS).map(([k, [, i, label]]) =>
     `<button data-act="nav" data-v="${k}" ${S.view === k ? 'aria-current="page"' : ''}><span class="pill">${ic(i, 22)}${k === 'updates' && updCount() ? `<span class="nb">${updCount()}</span>` : ''}</span>${label}</button>`).join('');
   const v = document.getElementById('view');
-  if (S.loading && !S.apps.length) { v.innerHTML = `<div class="skeleton wide"><span class="spin">${ic('update', 28)}</span>Reading your apps…</div>`; return; }
+  if (S.loading && !S.apps.length) { v.innerHTML = `<div class="skeleton wide"><span class="spin">${ic('update', 28)}</span>Warming up. Reading your apps…</div>`; return; }
   v.innerHTML = { home, apps, updates, usage, storage }[S.view]();
+  if (v.dataset.page !== S.view) { v.dataset.page = S.view; v.classList.add('deal'); clearTimeout(v._deal); v._deal = setTimeout(() => v.classList.remove('deal'), 600); }
 }
 
 // ---------- Shared pieces ----------
@@ -275,10 +429,10 @@ function permCard(which) {
 }
 
 function gauge(pct, big, small) {
-  const col = pct > 90 ? 'var(--warn)' : 'url(#gg)';
-  return `<div class="gauge"><svg viewBox="0 0 120 68" aria-hidden="true"><defs><linearGradient id="gg" x1="0" x2="1"><stop offset="0" stop-color="#FBDDA3"/><stop offset="1" stop-color="#EFA53A"/></linearGradient></defs>
+  const col = pct > 90 ? 'var(--warn)' : 'var(--hi)';
+  return `<div class="gauge"><svg viewBox="0 0 120 68" aria-hidden="true">
     <path class="g-track" d="M10 62a50 50 0 0 1 100 0" pathLength="100"/>
-    <path class="g-val" d="M10 62a50 50 0 0 1 100 0" pathLength="100" stroke="${col}" stroke-dasharray="${Math.max(.5, pct)} 100"/></svg>
+    <path class="g-val" d="M10 62a50 50 0 0 1 100 0" pathLength="100" style="stroke:${col}" stroke-dasharray="${Math.max(.5, pct)} 100"/></svg>
     <div class="g-txt"><b>${big}</b><small>${small}</small></div></div>`;
 }
 

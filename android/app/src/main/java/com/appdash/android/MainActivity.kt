@@ -201,7 +201,7 @@ class MainActivity : Activity() {
 
     private fun applyTheme(theme: String) {
         val dark = theme == "dark" || (theme != "light" && resources.configuration.isNightModeActive)
-        val bg = Color.parseColor(if (dark) "#15181B" else "#F8F6F1")
+        val bg = Color.parseColor(if (dark) "#0F0F0F" else "#DCDCD6")
         root.setBackgroundColor(bg)
         web.setBackgroundColor(bg)
         val light = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
