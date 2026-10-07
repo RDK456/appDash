@@ -446,6 +446,28 @@ tr:hover td,.catrow:hover{background:var(--hover)}
 @media (max-width:1100px){aside::after{display:none}.nav::after{position:absolute;top:6px;right:6px;margin:0}.logo{padding:2px 0 16px}header h1{min-width:0;font-size:24px}}
 @media (max-height:760px){aside::after{display:none}}
 
+/* ---- More hardware (Windows) ---- */
+.ulist .row.sel{grid-template-columns:46px 44px minmax(0,1fr) auto}
+.catrow .pbar{overflow:visible}
+/* Chart mode is a two-position slide switch */
+.tabs{display:inline-flex;gap:0;padding:3px;border-radius:10px;background:var(--lcd);box-shadow:inset 0 1px 3px rgba(0,0,0,.35);margin:0 0 14px}
+.tab{padding:6px 14px;border-radius:8px;color:var(--lcd-ink);min-height:34px;transition:background-color .15s,box-shadow .15s}
+.tab[aria-selected=true]{background:var(--key);color:var(--ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 2px 3px rgba(0,0,0,.25)}
+/* Search: you type straight onto an LCD */
+.search{background:var(--lcd);color:var(--lcd-ink);border:0;box-shadow:inset 0 1px 3px rgba(0,0,0,.35)}
+.search input{color:var(--lcd-ink);font-family:var(--mono)}
+.search input::placeholder{color:var(--lcd-ink);opacity:.6}
+/* Disk figures: an engraved spec plate */
+.dstats{gap:1px;background:var(--line);border-radius:8px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line)}
+.dstats>div{background:var(--hover);padding:8px 4px;border:0!important}
+.dstats small{text-transform:uppercase;letter-spacing:.1em;font-size:10px}
+/* Scan progress: tape counters */
+.counter{display:flex;flex-wrap:wrap;gap:8px 16px;margin:6px 0 8px}
+.counter span{display:inline-flex;align-items:center;gap:8px;font:600 11px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.counter b{font-family:var(--dot);font-size:22px;font-weight:800;color:var(--lcd-ink);background:var(--lcd);padding:2px 10px;border-radius:6px;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.35);min-width:5ch;text-align:right;font-variant-numeric:tabular-nums}
+.catrow{grid-template-columns:12px minmax(0,1fr) 140px 90px minmax(80px,220px) 16px}.catrow .num{white-space:nowrap}
+
 /* Calmer: orange only marks state (LEDs, the lit meter, label squares); keys are graphite, the light LCD is reflective grey-green */
 :root{--accent:#D9602A;--hi:#D9602A;--hi-ink:#A9461A;--accent-soft:#F4E2D8;--screw:#B6B6AF;--screw-hi:#E9E9E3;
   --lcd:#C7CBBD;--lcd-ink:#1F231B;--btn:#2B2B29;--btn-ink:#F2F2EC;--btn-edge:#000;--amber:#E0A030}
@@ -547,6 +569,29 @@ main>.status{margin-top:auto;width:100%}
 main>#view{margin-bottom:24px}
 .dstats b{font-size:16px;white-space:nowrap}
 @media (min-width:1101px){body{grid-template-columns:252px minmax(0,1fr)}}
+
+/* ===== Shared hardware details (Windows + Android) =====*/
+/* The LCD flickers on like a display powering up */
+header h1{animation:boot .9s steps(1,end) 1}
+@keyframes boot{0%{color:transparent}12%{color:inherit}22%{color:transparent}34%,100%{color:inherit}}
+
+/* Fuel-gauge marks: E at empty, F at full */
+.gmark{font:600 7px var(--mono);fill:var(--muted)}
+
+/* Checkboxes are rocker switches */
+.row input[type=checkbox],.bulk input[type=checkbox]{appearance:none;-webkit-appearance:none;width:42px!important;height:24px!important;margin:10px 0;flex:none;position:relative;cursor:pointer;
+  border-radius:6px;background:var(--lcd);box-shadow:inset 0 1px 3px rgba(0,0,0,.4)}
+.row input[type=checkbox]::before,.bulk input[type=checkbox]::before{content:"";position:absolute;top:2px;left:2px;width:19px;height:20px;border-radius:4px;
+  background:linear-gradient(var(--key),#cfcfc8);box-shadow:0 1px 2px rgba(0,0,0,.35);transition:transform .15s cubic-bezier(.3,1.4,.6,1)}
+:root[data-theme=dark] :is(.row,.bulk) input[type=checkbox]::before{background:linear-gradient(#5a5a57,#333331)}
+.row input[type=checkbox]:checked,.bulk input[type=checkbox]:checked{background:var(--accent)}
+.row input[type=checkbox]:checked::before,.bulk input[type=checkbox]:checked::before{transform:translateX(19px)}
+.pbar i{position:relative}
+.pbar i::after{content:"";position:absolute;right:-6px;top:-6px;width:12px;height:16px;border-radius:3px;
+  background:linear-gradient(var(--key),#cfcfc8);box-shadow:0 1px 2px rgba(0,0,0,.35),inset 0 -1px 0 rgba(0,0,0,.15);
+  background-image:linear-gradient(transparent 7px,var(--ink) 7px 9px,transparent 9px),linear-gradient(var(--key),#cfcfc8)}
+:root[data-theme=dark] .pbar i::after{background-image:linear-gradient(transparent 7px,#E8935F 7px 9px,transparent 9px),linear-gradient(#5a5a57,#333331)}
+@media (prefers-reduced-motion:reduce){header h1{animation:none}}
 </style>
 </head>
 <body>
@@ -698,6 +743,7 @@ function gauge(pct, big, small) {
   return `<div class="gauge"><svg viewBox="0 0 120 68" aria-hidden="true">
     <path class="g-track" d="M10 62a50 50 0 0 1 100 0" pathLength="100"/>
     <path class="g-val" d="M10 62a50 50 0 0 1 100 0" pathLength="100" style="stroke:${col}" stroke-dasharray="${Math.max(.5, pct)} 100"/>
+    <text class="gmark" x="3" y="66">E</text><text class="gmark" x="117" y="66" text-anchor="end">F</text>
     <g class="needle" style="transform:rotate(${Math.min(100, Math.max(0, pct)) * 1.8 - 90}deg)"><line x1="60" y1="62" x2="60" y2="17"/></g><circle class="hub" cx="60" cy="62" r="3.6"/></svg>
     <div class="g-txt"><b>${big}</b><small>${small}</small></div></div>`;
 }
@@ -896,7 +942,7 @@ function portable() {
   return `<section class="card">
     <div class="card-h"><h2>Scan for portable apps</h2>
       ${sc ? `<button class="btn ghost" data-act="cancelScan">Stop scan</button>` : `<button class="btn ghost" data-act="scanFolder">${ic('folder', 16)}Pick a folder</button><button class="btn" data-act="scanAll">Scan all drives</button>`}</div>
-    ${sc ? `<div class="progress"><i></i></div><b>${sc.found ?? 0} found in ${(sc.dirs ?? 0).toLocaleString()} folders</b><div class="path">${esc(sc.current)}</div>`
+    ${sc ? `<div class="progress"><i></i></div><div class="counter"><span><b>${sc.found ?? 0}</b>found</span><span><b>${(sc.dirs ?? 0).toLocaleString()}</b>folders</span></div><div class="path">${esc(sc.current)}</div>`
          : `<p class="muted" style="margin:0">Looks for .exe, .bat and .cmd files outside installed app folders. Windows, Program Files, AppData and source-code folders are skipped.</p>`}
   </section>
   <section class="card" style="margin-top:22px"><div class="card-h"><h2>Portable apps <span class="muted">(${list.length})</span></h2><span class="muted">${B(sum(list, a => a.size))}</span></div>
@@ -924,7 +970,7 @@ const inSlotOrder = cats => [...cats].sort((a, b) => FC_ORDER.indexOf(a.name) - 
 function diskDetail(name) {
   const r = S.diskData[name], b = S.diskBusy, label = esc(name.replace('\\', ''));
   if (b) return `<section class="card detail"><div class="card-h"><h2>Scanning ${esc(b.drive.replace('\\', ''))}</h2><button class="btn ghost" data-act="stopDisk">Stop scan</button></div>
-    <div class="progress"><i></i></div><b>${(b.files || 0).toLocaleString()} files, ${B(b.size)} so far</b><div class="path">${esc(b.current)}</div>
+    <div class="progress"><i></i></div><div class="counter"><span><b>${(b.files || 0).toLocaleString()}</b>files</span><span><b>${B(b.size)}</b>so far</span></div><div class="path">${esc(b.current)}</div>
     ${b.drive !== name ? '<p class="note">Another drive is being scanned. Wait for it to finish or stop it first.</p>' : ''}</section>`;
   if (!r) return `<section class="card detail"><div class="empty">${label} hasn’t been scanned yet.<br><br><button class="btn" data-act="rescanDisk" data-d="${esc(name)}">Scan ${label}</button></div></section>`;
   const max = Math.max(1, ...r.categories.map(c => c.size));

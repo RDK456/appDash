@@ -286,21 +286,6 @@ nav.tabs .nb{background:var(--lcd);color:#FF6A26;border-radius:4px;font-family:v
 @keyframes deal{from{opacity:0;transform:translateY(10px)}}
 
 /* ---- More hardware (Android) ---- */
-/* The LCD flickers on like a display powering up */
-header h1{animation:boot .9s steps(1,end) 1}
-@keyframes boot{0%{color:transparent}12%{color:inherit}22%{color:transparent}34%,100%{color:inherit}}
-
-/* Fuel-gauge marks: E at empty, F at full */
-.gmark{font:600 7px var(--mono);fill:var(--muted)}
-
-/* Checkboxes are rocker switches */
-.row input[type=checkbox],.bulk input[type=checkbox]{appearance:none;-webkit-appearance:none;width:42px!important;height:24px!important;margin:10px 0;flex:none;position:relative;cursor:pointer;
-  border-radius:6px;background:var(--lcd);box-shadow:inset 0 1px 3px rgba(0,0,0,.4)}
-.row input[type=checkbox]::before,.bulk input[type=checkbox]::before{content:"";position:absolute;top:2px;left:2px;width:19px;height:20px;border-radius:4px;
-  background:linear-gradient(var(--key),#cfcfc8);box-shadow:0 1px 2px rgba(0,0,0,.35);transition:transform .15s cubic-bezier(.3,1.4,.6,1)}
-:root[data-theme=dark] :is(.row,.bulk) input[type=checkbox]::before{background:linear-gradient(#5a5a57,#333331)}
-.row input[type=checkbox]:checked,.bulk input[type=checkbox]:checked{background:var(--accent)}
-.row input[type=checkbox]:checked::before,.bulk input[type=checkbox]:checked::before{transform:translateX(19px)}
 
 /* App details: an engraved spec plate */
 .adetail dl{grid-template-columns:auto 1fr;gap:1px;background:var(--line);border-radius:8px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line)}
@@ -310,11 +295,6 @@ header h1{animation:boot .9s steps(1,end) 1}
 
 /* Storage bars are faders: a cap rides on the end of each level */
 .pbar{display:block;overflow:visible;height:8px;margin:14px 6px 4px 0}
-.pbar i{position:relative}
-.pbar i::after{content:"";position:absolute;right:-6px;top:-6px;width:12px;height:16px;border-radius:3px;
-  background:linear-gradient(var(--key),#cfcfc8);box-shadow:0 1px 2px rgba(0,0,0,.35),inset 0 -1px 0 rgba(0,0,0,.15);
-  background-image:linear-gradient(transparent 7px,var(--ink) 7px 9px,transparent 9px),linear-gradient(var(--key),#cfcfc8)}
-:root[data-theme=dark] .pbar i::after{background-image:linear-gradient(transparent 7px,#E8935F 7px 9px,transparent 9px),linear-gradient(#5a5a57,#333331)}
 
 /* Rows press in like a plate under your thumb */
 .arow>button:active,.catrow:active,.tile:active{transform:translateY(1px)}
@@ -323,7 +303,6 @@ header h1{animation:boot .9s steps(1,end) 1}
 .plate{display:grid;justify-items:center;gap:8px;padding:6px 0 4px;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
 .plate .grille{width:min(260px,70%);height:46px;background:radial-gradient(circle,var(--grille) 1.7px,transparent 2.1px) 0 0/10px 10px}
 .plate b{font-family:var(--dot);font-size:20px;letter-spacing:.04em;color:var(--ink-2);font-weight:800}
-@media (prefers-reduced-motion:reduce){header h1{animation:none}}
 
 /* Calmer: orange only marks state (LEDs, the lit meter, label squares); keys are graphite, the light LCD is reflective grey-green */
 :root{--accent:#D9602A;--hi:#D9602A;--hi-ink:#A9461A;--accent-soft:#F4E2D8;--screw:#B6B6AF;--screw-hi:#E9E9E3;
@@ -426,6 +405,29 @@ main>.status{margin-top:auto;width:100%}
 main>#view{margin-bottom:24px}
 .dstats b{font-size:16px;white-space:nowrap}
 @media (min-width:1101px){body{grid-template-columns:252px minmax(0,1fr)}}
+
+/* ===== Shared hardware details (Windows + Android) =====*/
+/* The LCD flickers on like a display powering up */
+header h1{animation:boot .9s steps(1,end) 1}
+@keyframes boot{0%{color:transparent}12%{color:inherit}22%{color:transparent}34%,100%{color:inherit}}
+
+/* Fuel-gauge marks: E at empty, F at full */
+.gmark{font:600 7px var(--mono);fill:var(--muted)}
+
+/* Checkboxes are rocker switches */
+.row input[type=checkbox],.bulk input[type=checkbox]{appearance:none;-webkit-appearance:none;width:42px!important;height:24px!important;margin:10px 0;flex:none;position:relative;cursor:pointer;
+  border-radius:6px;background:var(--lcd);box-shadow:inset 0 1px 3px rgba(0,0,0,.4)}
+.row input[type=checkbox]::before,.bulk input[type=checkbox]::before{content:"";position:absolute;top:2px;left:2px;width:19px;height:20px;border-radius:4px;
+  background:linear-gradient(var(--key),#cfcfc8);box-shadow:0 1px 2px rgba(0,0,0,.35);transition:transform .15s cubic-bezier(.3,1.4,.6,1)}
+:root[data-theme=dark] :is(.row,.bulk) input[type=checkbox]::before{background:linear-gradient(#5a5a57,#333331)}
+.row input[type=checkbox]:checked,.bulk input[type=checkbox]:checked{background:var(--accent)}
+.row input[type=checkbox]:checked::before,.bulk input[type=checkbox]:checked::before{transform:translateX(19px)}
+.pbar i{position:relative}
+.pbar i::after{content:"";position:absolute;right:-6px;top:-6px;width:12px;height:16px;border-radius:3px;
+  background:linear-gradient(var(--key),#cfcfc8);box-shadow:0 1px 2px rgba(0,0,0,.35),inset 0 -1px 0 rgba(0,0,0,.15);
+  background-image:linear-gradient(transparent 7px,var(--ink) 7px 9px,transparent 9px),linear-gradient(var(--key),#cfcfc8)}
+:root[data-theme=dark] .pbar i::after{background-image:linear-gradient(transparent 7px,#E8935F 7px 9px,transparent 9px),linear-gradient(#5a5a57,#333331)}
+@media (prefers-reduced-motion:reduce){header h1{animation:none}}
 </style>
 </head>
 <body>
