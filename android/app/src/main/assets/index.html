@@ -285,6 +285,46 @@ nav.tabs .nb{background:var(--lcd);color:#FF6A26;border-radius:4px;font-family:v
 .deal .card:nth-child(2){animation-delay:.04s}.deal .card:nth-child(3){animation-delay:.08s}.deal .card:nth-child(n+4){animation-delay:.12s}
 @keyframes deal{from{opacity:0;transform:translateY(10px)}}
 
+/* ---- More hardware (Android) ---- */
+/* The LCD flickers on like a display powering up */
+header h1{animation:boot .9s steps(1,end) 1}
+@keyframes boot{0%{color:transparent}12%{color:inherit}22%{color:transparent}34%,100%{color:inherit}}
+
+/* Fuel-gauge marks: E at empty, F at full */
+.gmark{font:600 7px var(--mono);fill:var(--muted)}
+
+/* Checkboxes are rocker switches */
+.row input[type=checkbox],.bulk input[type=checkbox]{appearance:none;-webkit-appearance:none;width:42px!important;height:24px!important;margin:10px 0;flex:none;position:relative;cursor:pointer;
+  border-radius:6px;background:var(--lcd);box-shadow:inset 0 1px 3px rgba(0,0,0,.4)}
+.row input[type=checkbox]::before,.bulk input[type=checkbox]::before{content:"";position:absolute;top:2px;left:2px;width:19px;height:20px;border-radius:4px;
+  background:linear-gradient(var(--key),#cfcfc8);box-shadow:0 1px 2px rgba(0,0,0,.35);transition:transform .15s cubic-bezier(.3,1.4,.6,1)}
+:root[data-theme=dark] :is(.row,.bulk) input[type=checkbox]::before{background:linear-gradient(#5a5a57,#333331)}
+.row input[type=checkbox]:checked,.bulk input[type=checkbox]:checked{background:var(--accent)}
+.row input[type=checkbox]:checked::before,.bulk input[type=checkbox]:checked::before{transform:translateX(19px)}
+
+/* App details: an engraved spec plate */
+.adetail dl{grid-template-columns:auto 1fr;gap:1px;background:var(--line);border-radius:8px;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line)}
+.adetail dt,.adetail dd{background:var(--hover);padding:7px 10px}
+.adetail dt{font-size:10px;text-transform:uppercase;letter-spacing:.1em;display:flex;align-items:center}
+.adetail dd{font-family:var(--mono);font-size:12.5px}
+
+/* Storage bars are faders: a cap rides on the end of each level */
+.pbar{display:block;overflow:visible;height:8px;margin:14px 6px 4px 0}
+.pbar i{position:relative}
+.pbar i::after{content:"";position:absolute;right:-6px;top:-6px;width:12px;height:16px;border-radius:3px;
+  background:linear-gradient(var(--key),#cfcfc8);box-shadow:0 1px 2px rgba(0,0,0,.35),inset 0 -1px 0 rgba(0,0,0,.15);
+  background-image:linear-gradient(transparent 7px,var(--ink) 7px 9px,transparent 9px),linear-gradient(var(--key),#cfcfc8)}
+:root[data-theme=dark] .pbar i::after{background-image:linear-gradient(transparent 7px,#E8935F 7px 9px,transparent 9px),linear-gradient(#5a5a57,#333331)}
+
+/* Rows press in like a plate under your thumb */
+.arow>button:active,.catrow:active,.tile:active{transform:translateY(1px)}
+
+/* Nameplate at the end of Home: grille, model, silkscreen */
+.plate{display:grid;justify-items:center;gap:8px;padding:6px 0 4px;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.plate .grille{width:min(260px,70%);height:46px;background:radial-gradient(circle,var(--grille) 1.7px,transparent 2.1px) 0 0/10px 10px}
+.plate b{font-family:var(--dot);font-size:20px;letter-spacing:.04em;color:var(--ink-2);font-weight:800}
+@media (prefers-reduced-motion:reduce){header h1{animation:none}}
+
 /* Calmer: orange only marks state (LEDs, the lit meter, label squares); keys are graphite, the light LCD is reflective grey-green */
 :root{--accent:#D9602A;--hi:#D9602A;--hi-ink:#A9461A;--accent-soft:#F4E2D8;--screw:#B6B6AF;--screw-hi:#E9E9E3;
   --lcd:#C7CBBD;--lcd-ink:#1F231B;--btn:#2B2B29;--btn-ink:#F2F2EC;--btn-edge:#000;--amber:#E0A030}
@@ -501,6 +541,7 @@ function gauge(pct, big, small) {
   return `<div class="gauge"><svg viewBox="0 0 120 68" aria-hidden="true">
     <path class="g-track" d="M10 62a50 50 0 0 1 100 0" pathLength="100"/>
     <path class="g-val" d="M10 62a50 50 0 0 1 100 0" pathLength="100" style="stroke:${col}" stroke-dasharray="${Math.max(.5, pct)} 100"/>
+    <text class="gmark" x="3" y="66">E</text><text class="gmark" x="117" y="66" text-anchor="end">F</text>
     <g class="needle" style="transform:rotate(${Math.min(100, Math.max(0, pct)) * 1.8 - 90}deg)"><line x1="60" y1="62" x2="60" y2="17"/></g><circle class="hub" cx="60" cy="62" r="3.6"/></svg>
     <div class="g-txt"><b>${big}</b><small>${small}</small></div></div>`;
 }
@@ -572,7 +613,8 @@ function home() {
     ${storageCard()}${chartCard()}
     ${S.usageAccess ? `<section class="card"><div class="card-h"><h2>Used often</h2><button class="link" data-act="nav" data-v="usage">See all</button></div>${miniList(often().slice(0, 5), a => `<b>${mins(a.fgMs)}</b>${ago(a.lastUsed)}`)}</section>
     <section class="card"><div class="card-h"><h2>Rarely used</h2>${freeable(rare())}</div>${miniList(rare().slice(0, 5), a => `<b>${B(a.size)}</b>${ago(a.lastUsed)}`)}</section>` : ''}
-    ${aboutCard()}`;
+    ${aboutCard()}
+    <div class="plate wide" aria-hidden="true"><div class="grille"></div><b>AppDash</b><span>Model AD-1M · App inventory</span></div>`;
 }
 
 // ---------- Apps ----------
@@ -760,6 +802,12 @@ function paintThemeBtn() {
   const dark = document.documentElement.dataset.theme === 'dark', b = document.getElementById('themeBtn');
   b.innerHTML = ic(dark ? 'sun' : 'moon', 20); b.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
 }
+
+// Every key gives a small click you can feel; switches give a detent tick.
+document.addEventListener('pointerdown', e => {
+  const k = e.target.closest('button,input[type=checkbox],[role=button],.tile');
+  if (k && !k.disabled) window.AppDashNative?.tick?.(k.matches('input,#themeBtn'));
+}, { passive: true });
 
 document.addEventListener('click', async e => {
   const t = e.target.closest('[data-act]'); if (!t || t.disabled) return;

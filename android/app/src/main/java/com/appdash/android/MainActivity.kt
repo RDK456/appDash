@@ -14,6 +14,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
+import android.view.HapticFeedbackConstants
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.webkit.JavascriptInterface
@@ -105,6 +106,10 @@ class MainActivity : Activity() {
     inner class Bridge {
         @JavascriptInterface fun theme(): String = prefs.getString("theme", "") ?: ""
         @JavascriptInterface fun systemDark(): Boolean = resources.configuration.isNightModeActive
+        // Key clicks you can feel. Follows the phone's own touch-feedback setting.
+        @JavascriptInterface fun tick(detent: Boolean) = web.post {
+            web.performHapticFeedback(if (detent) HapticFeedbackConstants.CLOCK_TICK else HapticFeedbackConstants.KEYBOARD_TAP)
+        }
         @JavascriptInterface fun call(id: Int, cmd: String, arg: String) = dispatch(id, cmd, JSONObject(arg.ifEmpty { "{}" }))
     }
 
