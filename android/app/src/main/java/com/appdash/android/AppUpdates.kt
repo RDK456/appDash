@@ -101,7 +101,9 @@ object AppUpdates {
         if (suggested <= installedCode) return
         val pkgs = j.getJSONArray("packages")
         val name = (0 until pkgs.length()).map(pkgs::getJSONObject).firstOrNull { it.getLong("versionCode") == suggested }?.optString("versionName")
-        o.put("available", name ?: "build $suggested").put("via", "fdroid")
+        // f-droid.org names every APK package_versionCode.apk. Android only installs it over an F-Droid install
+        // because both are signed with the same key.
+        o.put("available", name ?: "build $suggested").put("via", "fdroid").put("apkUrl", "https://f-droid.org/repo/${pkg}_$suggested.apk")
     }
 
     // Play has no update API for other apps, but its public page lists the current version,
@@ -175,12 +177,18 @@ object AppUpdates {
 
     // ---------- Acting ----------
 
-    // Re-reads the linked repo here instead of trusting a URL from the page.
+    // Re-reads the source here instead of trusting a URL from the page.
     fun install(ctx: Context, pkg: String, progress: (Int) -> Unit) {
-        val repo = links(ctx).optString(pkg).ifEmpty { throw IllegalStateException("Link a GitHub repo to this app first.") }
+        val pm = ctx.packageManager
+        val info = pm.getPackageInfo(pkg, 0)
+        val repo = links(ctx).optString(pkg)
         val o = JSONObject()
-        github(repo, ctx.packageManager.getPackageInfo(pkg, 0).versionName ?: "", o)
-        val url = o.optString("apkUrl").ifEmpty { throw IllegalStateException(o.optString("note").ifEmpty { "$repo has nothing newer." }) }
+        when {
+            repo.isNotEmpty() -> github(repo, info.versionName ?: "", o)
+            source(pm, pm.getApplicationInfo(pkg, 0)) == "F-Droid" -> fdroid(pkg, info.longVersionCode, o)
+            else -> throw IllegalStateException("AppDash installs updates from F-Droid or a linked GitHub repo. Update this app in its store.")
+        }
+        val url = o.optString("apkUrl").ifEmpty { throw IllegalStateException(o.optString("note").ifEmpty { "Nothing newer to install." }) }
         Installer.install(ctx, URL(url), o.optString("sha256").ifEmpty { null }, pkg, progress)
     }
 
@@ -191,6 +199,15 @@ object AppUpdates {
         val attempts = listOfNotNull(by?.let { Intent(market).setPackage(it) }, market,
             Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$pkg")))
         for (intent in attempts) try { activity.startActivity(intent); return } catch (_: ActivityNotFoundException) { }
+    }
+
+    // Play's own "Updates available" list (Manage apps & device), which has Update all. Falls back to Play's home.
+    fun openPlayUpdates(activity: Activity) {
+        val attempts = listOf(
+            Intent("com.google.android.finsky.VIEW_MY_DOWNLOADS").setPackage("com.android.vending"),
+            Intent(Intent.ACTION_VIEW, Uri.parse("market://myapps")).setPackage("com.android.vending"))
+        for (intent in attempts) try { activity.startActivity(intent); return } catch (_: ActivityNotFoundException) { }
+        openPlayStore(activity)
     }
 
     fun openPlayStore(activity: Activity) {

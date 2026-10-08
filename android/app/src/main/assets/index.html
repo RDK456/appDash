@@ -453,9 +453,10 @@ window.__native = m => {
   if (m.event === 'uninstall') { S.bulk = m; render(); return; }
   if (m.event === 'appUpdate') { S.appUpd = m.error ? { ...S.appUpd, percent: null } : { ...S.appUpd, percent: m.percent ?? S.appUpd?.percent }; if (m.error) toast(m.error, true); render(); return; }
   if (m.event === 'install') {
-    if (m.error) { delete S.installing[m.id]; toast(m.error, true); }
-    else if (m.done) { delete S.installing[m.id]; toast('Updated'); checkUpdates(); load(); }
-    else S.installing[m.id] = m.percent;
+    if (m.error || m.done) {
+      delete S.installing[m.id]; toast(m.error || 'Updated', !!m.error);
+      if (S.queueing) nextInstall(); else if (m.done) { checkUpdates(); load(); }
+    } else S.installing[m.id] = m.percent;
     if (S.view === 'updates') render(); return;
   }
   const p = pending.get(m.id); pending.delete(m.id);
@@ -511,7 +512,7 @@ const appIc = a => `<span class="app-ic">${a.icon ? `<img src="${a.icon}" alt=""
 // ---------- State ----------
 const S = { view: 'home', apps: [], usageAccess: true, perms: { usage: true, files: true }, storage: null, files: null, scan: null,
   loading: true, q: '', cat: 'All', sort: 'size', chart: 'size', openApp: null, openCat: null, sel: new Set(), bulk: null, appUpd: null,
-  upd: null, updBusy: false, installing: {} };
+  upd: null, updBusy: false, installing: {}, usel: new Set(), queue: [], queueing: false, playAfter: false };
 const VIEWS = { home:['AppDash','grid','Home'], apps:['Apps','list','Apps'], updates:['Updates','update','Updates'], usage:['Usage','activity','Usage'], storage:['Storage','disk','Storage'] };
 const updCount = () => (S.upd?.items || []).filter(i => i.available).length;
 
@@ -664,21 +665,22 @@ function apps() {
 // ---------- Updates ----------
 // F-Droid and linked GitHub repos are checked here. Play and the other stores don't tell other apps about
 // updates, so those rows open the store that installed the app.
-function updRow(i, action) {
+function updRow(i, action, selectable) {
   const a = S.apps.find(x => x.id === i.id) || { name: i.name, category: 'Other' };
   const ver = i.available ? `${esc(i.version)} to ${esc(i.available)}` : esc(i.version);
   const detail = i.error ? `<small class="err">${esc(i.error)}</small>`
     : i.note ? `<small class="muted">${esc(i.note)}</small>`
     : i.repo ? `<small class="muted">${esc(i.repo)}${i.latest && !i.available ? `, latest ${esc(i.latest)}` : ''}</small>`
     : i.latest && !i.available ? `<small class="muted">Up to date (Play has ${esc(i.latest)})</small>` : '';
-  return `<div class="row">${appIc(a)}<div class="name"><b>${esc(a.name || i.name)}</b><small>${ver}</small>${detail}</div>
+  const box = selectable ? `<input type="checkbox" data-usel="${esc(i.id)}" ${S.usel.has(i.id) ? 'checked' : ''} aria-label="Select ${esc(a.name || i.name)}">` : '';
+  return `<div class="row">${box}${appIc(a)}<div class="name"><b>${esc(a.name || i.name)}</b><small>${ver}</small>${detail}</div>
     <span class="src ${i.via === 'github' ? 'github' : ''}">${i.repo ? 'GitHub' : esc(i.source)}</span>${action}</div>`;
 }
 
 function updateAction(i) {
   const pct = S.installing[i.id];
   if (pct != null) return `<span class="stat"><b>${pct}%</b></span>`;
-  if (i.via === 'github' && i.apkUrl) return `<button class="btn ubtn" data-act="installUpd" data-id="${esc(i.id)}" data-name="${esc(i.name)}" aria-label="Update ${esc(i.name)}">Update</button>`;
+  if ((i.via === 'github' || i.via === 'fdroid') && i.apkUrl) return `<button class="btn ubtn" data-act="installUpd" data-id="${esc(i.id)}" data-name="${esc(i.name)}" aria-label="Update ${esc(i.name)}">Update</button>`;
   if (i.via === 'play' && i.available) return `<button class="btn ubtn" data-act="openStore" data-id="${esc(i.id)}" aria-label="Update ${esc(i.name)} in the Play Store">Update</button>`;
   return `<button class="btn ghost ubtn" data-act="openStore" data-id="${esc(i.id)}" aria-label="Open ${esc(i.name)} in ${esc(i.source)}">Open</button>`;
 }
@@ -688,7 +690,7 @@ function updates() {
   const when = u ? `Checked at ${new Date(u.checkedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.` : '';
   const head = `<section class="card wide"><div class="card-h"><h2>App updates</h2>
       <button class="btn ghost ubtn" data-act="checkUpd" ${S.updBusy ? 'disabled' : ''}>${S.updBusy ? `<span class="spin">${ic('reel', 16)}</span>Checking` : 'Check now'}</button></div>
-    <p class="muted small" style="margin:0">${when} Play Store, F-Droid and GitHub-linked apps are checked here. Updates install in their own store. Play lists a different version per phone for some apps, and other stores don't share versions, so those open in their store.</p></section>`;
+    <p class="muted small" style="margin:0">${when} F-Droid and GitHub updates install right here. Play Store apps show here when Play lists their version.</p></section>`;
   if (!u) return head + (S.updBusy ? '' : `<section class="card wide"><div class="empty">Check to see which apps have updates.</div></section>`);
   const by = f => u.items.filter(f).sort((x, y) => x.name.localeCompare(y.name));
   const avail = by(i => i.available);
@@ -698,13 +700,37 @@ function updates() {
   const side = by(i => !i.available && (i.repo || i.source === 'Sideloaded'));
   const card = (title, items, extra, row) => items.length ? `<section class="card wide"><div class="card-h"><h2>${title} <span class="muted">(${items.length})</span></h2>${extra || ''}</div>${items.map(row).join('')}</section>` : '';
   const trackBtn = i => `<button class="btn ghost ubtn" data-act="linkRepo" data-id="${esc(i.id)}" data-name="${esc(i.name)}" data-repo="${esc(i.repo || '')}" aria-label="${i.repo ? 'Change GitHub repo for' : 'Track on GitHub:'} ${esc(i.name)}">${i.repo ? 'Change' : 'Track'}</button>`;
-  return head
-    + (avail.length ? card('Updates available', avail, '', i => updRow(i, updateAction(i)))
-       : `<section class="card wide"><div class="empty">No updates found.</div></section>`)
-    + card('Play Store', play, '<button class="link" data-act="openPlay">Open Play Store</button>', i => updRow(i, updateAction(i)))
+  // Play keeps its own list of pending updates for every Play app, including the ones that publish no version.
+  const playMod = u.items.some(i => i.source === 'Play Store') ? `<section class="card wide"><div class="card-h"><h2>Play Store updates</h2></div>
+    <p class="muted small" style="margin:0 0 12px">Most Play apps ship a different build per phone, so Play doesn't share their versions. Play's own list shows every pending update, with Update all.</p>
+    <button class="btn" data-act="openPlayUpdates">Open Play updates</button></section>` : '';
+  return head + playMod
+    + (avail.length ? card('Updates available', avail, '', i => updRow(i, updateAction(i), true)).replace('</h2></div>', '</h2></div>' + updBulk(avail))
+       : `<section class="card wide"><div class="empty">Nothing AppDash can update here right now.</div></section>`)
+    + card('Play Store', play, '<button class="link" data-act="openPlayUpdates">Play updates</button>', i => updRow(i, updateAction(i)))
     + card('Other stores', stores, '', i => updRow(i, updateAction(i)))
     + card('Installed from files', side, '', i => updRow(i, trackBtn(i)))
-    + `<p class="muted small wide" style="margin:0">Play Store: open it, tap your profile picture, then Manage apps &amp; device to update everything at once.</p>`;
+    + `<p class="muted small wide" style="margin:0">Play updates opens Play's Manage apps &amp; device list, where Update all updates every Play app at once.</p>`;
+}
+
+function updBulk(avail) {
+  if (S.queueing) return `<div class="bulk" role="status"><span class="spin">${ic('reel', 16)}</span>Updating, ${S.queue.length + 1} left. Confirm each install when Android asks.</div>`;
+  const allOn = avail.every(i => S.usel.has(i.id)), n = avail.filter(i => S.usel.has(i.id)).length;
+  return `<div class="bulk"><input type="checkbox" id="uselAll" data-usel="all" ${allOn ? 'checked' : ''}><label for="uselAll">Select all</label>
+    <button class="btn" data-act="updateSel" ${n ? '' : 'disabled'}>Update selected${n ? ` (${n})` : ''}</button></div>`;
+}
+
+// Installs run one at a time (Android asks to confirm each); Play apps go to Play's own update list at the end.
+function nextInstall() {
+  const id = S.queue.shift();
+  S.queueing = !!id;
+  if (!id) {
+    checkUpdates(); load();
+    if (S.playAfter) { S.playAfter = false; call('openPlayUpdates').catch(fail); }
+    return;
+  }
+  S.installing[id] = 0; render();
+  call('installUpdate', { id }).catch(err => { delete S.installing[id]; fail(err); nextInstall(); });
 }
 
 async function checkUpdates() {
@@ -843,6 +869,16 @@ document.addEventListener('click', async e => {
     case 'checkUpd': checkUpdates(); break;
     case 'openStore': call('openStore', { id: d.id }).catch(fail); break;
     case 'openPlay': call('openPlay').catch(fail); break;
+    case 'openPlayUpdates': call('openPlayUpdates').catch(fail); break;
+    case 'updateSel': {
+      const picked = S.upd.items.filter(i => i.available && S.usel.has(i.id));
+      S.queue = picked.filter(i => i.apkUrl && i.via !== 'play').map(i => i.id);
+      S.playAfter = picked.some(i => !i.apkUrl);
+      S.usel.clear();
+      if (S.queue.length) nextInstall();
+      else if (S.playAfter) { S.playAfter = false; call('openPlayUpdates').catch(fail); render(); }
+      break;
+    }
     case 'installUpd':
       S.installing[d.id] = 0; render();
       call('installUpdate', { id: d.id }).catch(err => { delete S.installing[d.id]; fail(err); render(); });
@@ -866,6 +902,12 @@ document.addEventListener('click', async e => {
   }
 });
 document.addEventListener('change', e => {
+  const us = e.target.dataset.usel;
+  if (us) {
+    const avail = (S.upd?.items || []).filter(i => i.available).map(i => i.id);
+    (us === 'all' ? avail : [us]).forEach(id => e.target.checked ? S.usel.add(id) : S.usel.delete(id));
+    render(); document.querySelector(`[data-usel="${CSS.escape(us)}"]`)?.focus(); return;
+  }
   const sel = e.target.dataset.sel;
   if (sel) {
     const ids = sel === 'all' ? rare().map(a => a.id) : [sel];

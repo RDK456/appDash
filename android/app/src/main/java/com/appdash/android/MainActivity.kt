@@ -163,6 +163,7 @@ class MainActivity : Activity() {
             }
             "openStore" -> ui { AppUpdates.openStore(this, a.getString("id")); true }
             "openPlay" -> ui { AppUpdates.openPlayStore(this); true }
+            "openPlayUpdates" -> ui { AppUpdates.openPlayUpdates(this); true }
             "updateCheck" -> bg { Updater.check(this) }
             "updateInstall" -> bg { Updater.install(this) { pct -> push(JSONObject().put("event", "appUpdate").put("percent", pct)) }; true }
             else -> answer(id) { throw IllegalArgumentException("Unknown command: $cmd") }
